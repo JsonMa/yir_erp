@@ -5,6 +5,11 @@ const _ = require('underscore');
 
 class CategoryController extends Controller {
 
+  /**
+   * 新增分类
+   *
+   * @memberof CategoryController
+   */
   async create() {
     const { body } = this.ctx.request;
     await this.ctx.verify('schema.category', body);
@@ -34,6 +39,11 @@ class CategoryController extends Controller {
     };
   }
 
+  /**
+   * 分类列表
+   *
+   * @memberof CategoryController
+   */
   async index() {
     const { ctx } = this;
     const { service } = ctx;
@@ -43,140 +53,118 @@ class CategoryController extends Controller {
 
     await this.ctx.verify(this.listRule, query);
 
-    const filter = {
-      recipient: { $in: [ 'ALL', 'APP', 'SAAS' ] },
-    };
+    const filter = {};
     if (query.keyword) {
       filter.$or = [
-        { subject: { $regex: query.keyword } },
+        { name: { $regex: query.keyword } },
+        { no: { $regex: query.keyword } },
       ];
     }
-    let notifications = await service.notification.findMany(filter, null, {
+    const categories = await service.category.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
       sort: generateSortParam(sort) });
 
-    if (!_.isEmpty(notifications)) {
-      // 增加发件人信息, 这里仅限发件人为admin用户的
-      const sender = _.pluck(notifications, 'sender');
-      let account = await service.account.findMany({ _id: { $in: sender } });
-      let admin = await service.accountAdmin.findMany({ account_id: { $in: sender } });
-
-      account = _.indexBy(account, '_id');
-      admin = _.indexBy(admin, 'account_id');
-
-      notifications = notifications.map(function(not) {
-        not = not.toObject();
-        not.senderName = admin[not.sender] ? admin[not.sender].name : '';
-        not.senderTel = account[not.sender] ? account[not.sender].tel : '';
-
-        return not;
-      });
-    }
-
     this.ctx.jsonBody = {
       meta: {
-        count: await service.notification.count(filter),
+        count: await service.category.count(filter),
       },
-      data: notifications,
+      data: categories,
     };
   }
 
+  /**
+   * 分类详情
+   *
+   * @memberof CategoryController
+   */
   async get() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
     const { query } = ctx.request;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const category = await service.category.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
-    if (!notification.read) {
-      await service.notification.update({ _id: params.id }, { read: true });
-      notification.read = true;
-    }
 
     const embedQuery = query.embed || '';
     const embed = {
-      user: {},
-      file: !~embedQuery.indexOf('file') ? {} : await service.file.findOne({ _id: notification.attachment }), // eslint-disable-line
+      sub: !~embedQuery.indexOf('sub') ? {} : await service.category.findMany({ parent: category.id }), // eslint-disable-line
     };
-
-    if (~embedQuery.indexOf('user')) { // eslint-disable-line
-      const accountAdmin = await service.accountAdmin.findOne({ account_id: notification.sender });
-      const account = await service.account.findById(accountAdmin.account_id);
-      embed.user = Object.assign(accountAdmin.toJSON(), {
-        type: account.type,
-      });
-    }
 
     this.ctx.jsonBody = {
       embed,
-      data: notification,
+      data: category,
     };
   }
 
   get updateRule() {
     return {
-      properties: {
-        id: {
-          $ref: 'schema.definition#/oid',
+      $merge: {
+        source: {
+          $ref: 'schema.category#',
         },
-        read: {
-          type: 'boolean',
-        },
-        action: {
-          type: 'string',
-          enum: [ 'read' ],
+        with: {
+          properties: {
+            id: {
+              $ref: 'schema.definition#/oid',
+            },
+          },
         },
       },
       $async: true,
-      required: [ 'id', 'action' ],
-      additionalProperties: false,
     };
   }
 
+  /**
+   * 修改分类
+   *
+   * @memberof CategoryController
+   */
   async update() {
-    this.ctx.authPermission();
     const { ctx, updateRule } = this;
     const { query, body } = ctx.request;
     const { params, service } = ctx;
     service.xss.xssFilter(body);
 
-    await this.ctx.verify(updateRule, Object.assign({}, query, params, body));
+    const updateParams = Object.assign({}, query, params, body);
+    await this.ctx.verify(updateRule, updateParams);
 
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const category = await service.category.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    if (query.action === 'read') {
-      const readNotification = {
-        read: body.read,
-      };
-      await service.notification.update({ _id: params.id }, readNotification);
-      Object.assign(notification, readNotification);
+    if (category) {
+      await service.category.update({ _id: params.id }, updateParams);
+      Object.assign(category, updateParams);
     }
 
     this.ctx.jsonBody = {
-      data: notification,
+      data: category,
     };
   }
 
+  /**
+   * 删除分类
+   *
+   * @memberof CategoryController
+   */
   async delete() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const category = await service.category.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.notification.destroy({ _id: params.id });
+    const subCategory = await service.category.findMany({ parent: category.id });
+    ctx.error(subCategory.length === 0, '删除失败，该分类下存在子类');
 
+    await service.category.destroy({ _id: params.id });
     this.ctx.body = {
-      data: notification,
+      data: category,
     };
   }
 }
