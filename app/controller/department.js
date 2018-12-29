@@ -1,27 +1,25 @@
 'use strict';
 
 const { Controller } = require('egg');
-const uuid = require('uuid');
 
-class MaterialEntryController extends Controller {
+class DepartmentController extends Controller {
+
   /**
-   * 新增材料入库单
+   * 新增部门
    *
-   * @memberof MaterialEntryController
+   * @memberof DepartmentController
    */
   async create() {
-
     const { ctx } = this;
     const { body } = ctx.request;
-    await ctx.verify('schema.materialEntry', body);
-    const { real_count, per_price } = body;
+    await ctx.verify('schema.department', body);
 
-    body.no = uuid(); // 生成单号
-    body.totalPrice = real_count * per_price; // 设置总价
+    const isExistend = ctx.service.department.isExsited({ name: body.name });
+    ctx.error(isExistend, '该名称已存在');
 
-    const entry = await ctx.model.MaterialEntry.create(body);
+    const department = await ctx.service.department.create(body);
     this.ctx.jsonBody = {
-      data: entry,
+      data: department,
     };
   }
 
@@ -45,9 +43,9 @@ class MaterialEntryController extends Controller {
   }
 
   /**
-   * 材料入库单列表
+   * 部门列表
    *
-   * @memberof MaterialEntryController
+   * @memberof DepartmentController
    */
   async index() {
     const { ctx } = this;
@@ -62,41 +60,44 @@ class MaterialEntryController extends Controller {
     if (query.keyword) {
       filter.$or = [
         { name: { $regex: query.keyword } },
-        { no: { $regex: query.keyword } },
-        { model: { $regex: query.keyword } },
-        { specific: { $regex: query.keyword } },
       ];
     }
-    const materials = await service.material.findMany(filter, null, {
+    const departments = await service.department.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'supplier category');
+      sort: generateSortParam(sort) }, 'parent image');
 
     this.ctx.jsonBody = {
       meta: {
-        count: await service.material.count(filter),
+        count: await service.department.count(filter),
       },
-      data: materials,
+      data: departments,
     };
   }
 
   /**
-   * 材料入库单详情
+   * 部门详情（该部门所有用户）
    *
-   * @memberof MaterialEntryController
+   * @memberof DepartmentController
    */
   async get() {
     const { ctx } = this;
     const { params, service } = ctx;
+    const { query } = ctx.request;
 
     await ctx.verify('schema.id', params);
-    const material = await service.material.findById(params.id, 'supplier category')
-      .catch(err => {
-        ctx.error(!err, 404);
-      });
+    const department = await service.department.findById(params.id).catch(err => {
+      ctx.error(!err, 404);
+    });
+
+    const embedQuery = query.embed || '';
+    const embed = {
+      accounts: !~embedQuery.indexOf('account') ? {} : await service.account.findMany({ department: department.id }), // eslint-disable-line
+    };
 
     this.ctx.jsonBody = {
-      data: material,
+      embed,
+      data: department,
     };
   }
 
@@ -104,7 +105,7 @@ class MaterialEntryController extends Controller {
     return {
       $merge: {
         source: {
-          $ref: 'schema.material#',
+          $ref: 'schema.department#',
         },
         with: {
           properties: {
@@ -119,49 +120,54 @@ class MaterialEntryController extends Controller {
   }
 
   /**
-   * 修改材料入库单
+   * 修改部门
    *
-   * @memberof MaterialEntryController
+   * @memberof DepartmentController
    */
   async update() {
     const { ctx, updateRule } = this;
     const { query, body } = ctx.request;
     const { params, service } = ctx;
-    const updateParams = Object.assign({}, query, params, body);
 
+    const updateParams = Object.assign({}, query, params, body);
     await this.ctx.verify(updateRule, updateParams);
-    const material = await service.material.findById(params.id, 'supplier category').catch(err => {
+
+    const department = await service.department.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.material.update({ _id: params.id }, updateParams);
-    Object.assign(material, updateParams);
+    if (department) {
+      await service.department.update({ _id: params.id }, updateParams);
+      Object.assign(department, updateParams);
+    }
 
     this.ctx.jsonBody = {
-      data: material,
+      data: department,
     };
   }
 
   /**
-   * 删除材料入库单
+   * 删除部门
    *
-   * @memberof MaterialEntryController
+   * @memberof DepartmentController
    */
   async delete() {
     const { ctx } = this;
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const material = await service.material.findById(params.id).catch(err => {
+    const department = await service.department.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.material.destroy({ _id: params.id });
+    const accounts = await service.account.findMany({ department: department.id });
+    ctx.error(accounts.length === 0, '删除失败，该分类下存在子类');
 
+    await service.department.destroy({ _id: params.id });
     this.ctx.body = {
-      data: material,
+      data: department,
     };
   }
 }
 
-module.exports = MaterialEntryController;
+module.exports = DepartmentController;

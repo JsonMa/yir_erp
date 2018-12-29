@@ -4,7 +4,7 @@
 module.exports = {
   properties: {
     no: {
-      $ref: 'schema.definition#/oid',
+      type: 'number',
     },
     material: {
       $ref: 'schema.definition#/oid',

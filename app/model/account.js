@@ -37,6 +37,7 @@ module.exports = ({ mongoose }) => {
     role: {
       type: String,
       enum: [ 'KUGUAN', 'CAIWU', 'CAIGOU', 'ZHIJIAN', 'NORMAL', 'ADMIN' ],
+      default: 'NORMAL',
     },
     nick_name: String,
     email: String,
@@ -55,6 +56,7 @@ module.exports = ({ mongoose }) => {
     state: {
       type: String,
       enum: [ 'EXIST', 'LEAVE' ],
+      default: 'EXIST',
     },
     gender: {
       type: String,

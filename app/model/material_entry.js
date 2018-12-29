@@ -60,6 +60,7 @@ module.exports = ({ mongoose }) => {
     purchase_method: {
       type: String,
       enum: [ 'CASH', 'BANK', 'WECHAT', 'ALIPAY' ],
+      default: 'CASH',
     },
     deleted_at: Date,
   }, Object.assign({}, { timestamps }));

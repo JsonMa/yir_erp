@@ -7,7 +7,7 @@ module.exports = app => {
   const { router, controller } = app;
   const prefix = app.config.prefix || '';
 
-  // account
+  // auth
   // router.post(`${prefix}/api/auth/password`, controller.auth.editPassword);
   // router.get(`${prefix}/api/auth/captcha`, controller.auth.generateCaptcha);
   // router.post(`${prefix}/api/auth/authcode`, controller.auth.sendAuthcode);
@@ -16,19 +16,19 @@ module.exports = app => {
   // router.post(`${prefix}/api/auth/logout`, controller.auth.logout);
   // router.post(`${prefix}/api/authcode/:id`, controller.auth.authcodeVerify);
 
-  // category
-  router.get(`${prefix}/api/categories`, controller.category.index);
-  router.post(`${prefix}/api/categories`, controller.category.create);
-  router.get(`${prefix}/api/categories/:id`, controller.category.get);
-  router.patch(`${prefix}/api/categories/:id`, controller.category.update);
-  router.delete(`${prefix}/api/categories/:id`, controller.category.delete);
+  // account
+  router.get(`${prefix}/api/accounts`, controller.account.index);
+  router.post(`${prefix}/api/accounts`, controller.account.create);
+  router.get(`${prefix}/api/accounts/:id`, controller.account.get);
+  router.patch(`${prefix}/api/accounts/:id`, controller.account.update);
+  router.delete(`${prefix}/api/accounts/:id`, controller.account.delete);
 
   // department
-  // router.get(`${prefix}/api/departments`, controller.department.index);
-  // router.post(`${prefix}/api/departments`, controller.department.create);
-  // router.get(`${prefix}/api/departments/:id`, controller.department.get);
-  // router.patch(`${prefix}/api/departments/:id`, controller.department.update);
-  // router.delete(`${prefix}/api/departments/:id`, controller.department.delete);
+  router.get(`${prefix}/api/departments`, controller.department.index);
+  router.post(`${prefix}/api/departments`, controller.department.create);
+  router.get(`${prefix}/api/departments/:id`, controller.department.get);
+  router.patch(`${prefix}/api/departments/:id`, controller.department.update);
+  router.delete(`${prefix}/api/departments/:id`, controller.department.delete);
 
   // file
   router.get(`${prefix}/api/files/:id`, controller.file.index);
@@ -37,12 +37,28 @@ module.exports = app => {
   router.delete(`${prefix}/api/files/:id`, controller.file.delete);
   router.get(`${prefix}/api/files/csrf/token`, controller.file.token);
 
+
+  // category
+  router.get(`${prefix}/api/categories`, controller.category.index);
+  router.post(`${prefix}/api/categories`, controller.category.create);
+  router.get(`${prefix}/api/categories/:id`, controller.category.get);
+  router.patch(`${prefix}/api/categories/:id`, controller.category.update);
+  router.delete(`${prefix}/api/categories/:id`, controller.category.delete);
+
+  // material
+  router.get(`${prefix}/api/materials`, controller.material.index);
+  router.post(`${prefix}/api/materials`, controller.material.create);
+  router.get(`${prefix}/api/materials/:id`, controller.material.get);
+  router.patch(`${prefix}/api/materials/:id`, controller.material.update);
+  router.delete(`${prefix}/api/materials/:id`, controller.material.delete);
+
+
   // material_entry
-  // router.get(`${prefix}/api/material_entries`, controller.material_entry.index);
-  // router.post(`${prefix}/api/material_entries`, controller.material_entry.create);
-  // router.get(`${prefix}/api/material_entries/:id`, controller.material_entry.get);
-  // router.patch(`${prefix}/api/material_entries/:id`, controller.material_entry.update);
-  // router.delete(`${prefix}/api/material_entries/:id`, controller.material_entry.delete);
+  router.get(`${prefix}/api/material_entries`, controller.materialEntry.index);
+  router.post(`${prefix}/api/material_entries`, controller.materialEntry.create);
+  router.get(`${prefix}/api/material_entries/:id`, controller.materialEntry.get);
+  router.patch(`${prefix}/api/material_entries/:id`, controller.materialEntry.update);
+  router.delete(`${prefix}/api/material_entries/:id`, controller.materialEntry.delete);
 
 
   // // material_out
@@ -51,13 +67,6 @@ module.exports = app => {
   // router.get(`${prefix}/api/material_outs/:id`, controller.material_out.get);
   // router.patch(`${prefix}/api/material_outs/:id`, controller.material_out.update);
   // router.delete(`${prefix}/api/material_outs/:id`, controller.material_out.delete);
-
-  // material
-  router.get(`${prefix}/api/materials`, controller.material.index);
-  router.post(`${prefix}/api/materials`, controller.material.create);
-  router.get(`${prefix}/api/materials/:id`, controller.material.get);
-  router.patch(`${prefix}/api/materials/:id`, controller.material.update);
-  router.delete(`${prefix}/api/materials/:id`, controller.material.delete);
 
   // product_entry
   // router.get(`${prefix}/api/product_entries`, controller.product_entry.index);
