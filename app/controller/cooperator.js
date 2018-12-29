@@ -1,7 +1,6 @@
 'use strict';
 
 const { Controller } = require('egg');
-const _ = require('underscore');
 
 class CooperatorController extends Controller {
   /**
@@ -10,8 +9,12 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async create() {
+    const { ctx } = this;
     const { body } = this.ctx.request;
     await this.ctx.verify('schema.cooperator', body);
+
+    const isExistend = ctx.service.cooperator.isExsited({ name: body.name });
+    ctx.error(!isExistend, '该名称已存在');
 
     const cooperator = await this.ctx.model.Cooperator.create(body);
     this.ctx.jsonBody = {
@@ -84,13 +87,22 @@ class CooperatorController extends Controller {
   async get() {
     const { ctx } = this;
     const { params, service } = ctx;
+    const { query } = ctx.request;
 
     await ctx.verify('schema.id', params);
+
     const cooperation = await service.cooperator.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
+    // 该供应商下的材料
+    const embedQuery = query.embed || '';
+    const embed = {
+      material: [ 'material' ].includes(embedQuery) && cooperation.type === 'SUPPLIER' ? await service.material.findMany({ supplier: params.id }) : {},
+    };
+
     this.ctx.jsonBody = {
+      embed,
       data: cooperation,
     };
   }

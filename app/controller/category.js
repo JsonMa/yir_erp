@@ -1,7 +1,6 @@
 'use strict';
 
 const { Controller } = require('egg');
-const _ = require('underscore');
 
 class CategoryController extends Controller {
 
@@ -11,8 +10,12 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async create() {
-    const { body } = this.ctx.request;
-    await this.ctx.verify('schema.category', body);
+    const { ctx } = this;
+    const { body } = ctx.request;
+    await ctx.verify('schema.category', body);
+
+    const isExistend = ctx.service.category.isExsited({ name: body.name });
+    ctx.error(isExistend, '该名称已存在');
 
     const category = await this.ctx.model.Category.create(body);
     this.ctx.jsonBody = {
@@ -63,7 +66,7 @@ class CategoryController extends Controller {
     const categories = await service.category.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) });
+      sort: generateSortParam(sort) }, 'parent image');
 
     this.ctx.jsonBody = {
       meta: {
@@ -91,6 +94,7 @@ class CategoryController extends Controller {
     const embedQuery = query.embed || '';
     const embed = {
       sub: !~embedQuery.indexOf('sub') ? {} : await service.category.findMany({ parent: category.id }), // eslint-disable-line
+      material: !~embedQuery.indexOf('material') ? {} : await service.material.findMany({ category: category.id }), // eslint-disable-line
     };
 
     this.ctx.jsonBody = {

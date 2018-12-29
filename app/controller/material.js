@@ -4,11 +4,29 @@ const { Controller } = require('egg');
 const _ = require('underscore');
 
 class MaterialController extends Controller {
+  /**
+   * 新增材料
+   *
+   * @memberof MaterialController
+   */
   async create() {
-    const { body } = this.ctx.request;
-    await this.ctx.verify('schema.material', body);
 
-    const material = await this.ctx.model.Material.create(body);
+    const { ctx } = this;
+    const { body } = ctx.request;
+    await ctx.verify('schema.material', body);
+
+    const isExistend = ctx.service.cooperator.isExsited({ name: body.name });
+    ctx.error(!isExistend, '该名称已存在');
+
+    const { supplier } = body;
+    if (supplier) {
+      const { type } = await ctx.service.cooperator.findById(supplier).catch(err => {
+        ctx.error(!err, 404);
+      });
+      ctx.error([ 'SUPPLIER', 'BOTH' ].includes(type), '不属于供应商类型');
+    }
+
+    const material = await ctx.model.Material.create(body);
     this.ctx.jsonBody = {
       data: material,
     };
@@ -33,6 +51,11 @@ class MaterialController extends Controller {
     };
   }
 
+  /**
+   * 材料列表
+   *
+   * @memberof MaterialController
+   */
   async index() {
     const { ctx } = this;
     const { service } = ctx;
@@ -42,140 +65,108 @@ class MaterialController extends Controller {
 
     await this.ctx.verify(this.listRule, query);
 
-    const filter = {
-      recipient: { $in: [ 'ALL', 'APP', 'SAAS' ] },
-    };
+    const filter = {};
     if (query.keyword) {
       filter.$or = [
-        { subject: { $regex: query.keyword } },
+        { name: { $regex: query.keyword } },
+        { no: { $regex: query.keyword } },
+        { model: { $regex: query.keyword } },
+        { specific: { $regex: query.keyword } },
       ];
     }
-    let notifications = await service.notification.findMany(filter, null, {
+    const materials = await service.material.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) });
-
-    if (!_.isEmpty(notifications)) {
-      // 增加发件人信息, 这里仅限发件人为admin用户的
-      const sender = _.pluck(notifications, 'sender');
-      let account = await service.account.findMany({ _id: { $in: sender } });
-      let admin = await service.accountAdmin.findMany({ account_id: { $in: sender } });
-
-      account = _.indexBy(account, '_id');
-      admin = _.indexBy(admin, 'account_id');
-
-      notifications = notifications.map(function(not) {
-        not = not.toObject();
-        not.senderName = admin[not.sender] ? admin[not.sender].name : '';
-        not.senderTel = account[not.sender] ? account[not.sender].tel : '';
-
-        return not;
-      });
-    }
+      sort: generateSortParam(sort) }, 'supplier category');
 
     this.ctx.jsonBody = {
       meta: {
-        count: await service.notification.count(filter),
+        count: await service.material.count(filter),
       },
-      data: notifications,
+      data: materials,
     };
   }
 
+  /**
+   * 材料详情
+   *
+   * @memberof MaterialController
+   */
   async get() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
-    const { query } = ctx.request;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
-      ctx.error(!err, 404);
-    });
-    if (!notification.read) {
-      await service.notification.update({ _id: params.id }, { read: true });
-      notification.read = true;
-    }
-
-    const embedQuery = query.embed || '';
-    const embed = {
-      user: {},
-      file: !~embedQuery.indexOf('file') ? {} : await service.file.findOne({ _id: notification.attachment }), // eslint-disable-line
-    };
-
-    if (~embedQuery.indexOf('user')) { // eslint-disable-line
-      const accountAdmin = await service.accountAdmin.findOne({ account_id: notification.sender });
-      const account = await service.account.findById(accountAdmin.account_id);
-      embed.user = Object.assign(accountAdmin.toJSON(), {
-        type: account.type,
+    const material = await service.material.findById(params.id, 'supplier category')
+      .catch(err => {
+        ctx.error(!err, 404);
       });
-    }
 
     this.ctx.jsonBody = {
-      embed,
-      data: notification,
+      data: material,
     };
   }
 
   get updateRule() {
     return {
-      properties: {
-        id: {
-          $ref: 'schema.definition#/oid',
+      $merge: {
+        source: {
+          $ref: 'schema.material#',
         },
-        read: {
-          type: 'boolean',
-        },
-        action: {
-          type: 'string',
-          enum: [ 'read' ],
+        with: {
+          properties: {
+            id: {
+              $ref: 'schema.definition#/oid',
+            },
+          },
         },
       },
       $async: true,
-      required: [ 'id', 'action' ],
-      additionalProperties: false,
     };
   }
 
+  /**
+   * 修改材料
+   *
+   * @memberof MaterialController
+   */
   async update() {
-    this.ctx.authPermission();
     const { ctx, updateRule } = this;
     const { query, body } = ctx.request;
     const { params, service } = ctx;
-    service.xss.xssFilter(body);
+    const updateParams = Object.assign({}, query, params, body);
 
-    await this.ctx.verify(updateRule, Object.assign({}, query, params, body));
-
-    const notification = await service.notification.findById(params.id).catch(err => {
+    await this.ctx.verify(updateRule, updateParams);
+    const material = await service.material.findById(params.id, 'supplier category').catch(err => {
       ctx.error(!err, 404);
     });
 
-    if (query.action === 'read') {
-      const readNotification = {
-        read: body.read,
-      };
-      await service.notification.update({ _id: params.id }, readNotification);
-      Object.assign(notification, readNotification);
-    }
+    await service.material.update({ _id: params.id }, updateParams);
+    Object.assign(material, updateParams);
 
     this.ctx.jsonBody = {
-      data: notification,
+      data: material,
     };
   }
 
+  /**
+   * 删除材料
+   *
+   * @memberof MaterialController
+   */
   async delete() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const material = await service.material.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.notification.destroy({ _id: params.id });
+    await service.material.destroy({ _id: params.id });
 
     this.ctx.body = {
-      data: notification,
+      data: material,
     };
   }
 }

@@ -42,7 +42,7 @@ module.exports = ({ mongoose }) => {
     },
     type: {
       type: String,
-      enum: [ 'SUPPLIER', 'PURCHASER' ],
+      enum: [ 'SUPPLIER', 'PURCHASER', 'BOTH' ],
       default: 'SUPPLIER',
     },
     deleted_at: Date,

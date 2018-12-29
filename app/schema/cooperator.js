@@ -36,7 +36,7 @@ module.exports = {
     },
     type: {
       type: 'string',
-      enum: [ 'SUPPLIER', 'PURCHASER' ],
+      enum: [ 'SUPPLIER', 'PURCHASER', 'BOTH' ],
     },
     enable: {
       type: 'boolean',
