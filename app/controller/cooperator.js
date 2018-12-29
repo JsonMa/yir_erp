@@ -50,14 +50,13 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async index() {
-    const { ctx } = this;
+    const { ctx, listRule } = this;
     const { service } = ctx;
     const { query } = ctx.request;
     const { limit = 10, offset = 0, sort = '-created_at' } = query;
     const { generateSortParam } = ctx.helper.pagination;
 
-    await this.ctx.verify(this.listRule, query);
-
+    await this.ctx.verify(listRule, query);
     const filter = {};
     if (query.keyword) {
       filter.name = { $regex: query.keyword };
@@ -77,128 +76,88 @@ class CooperatorController extends Controller {
     };
   }
 
+  /**
+   * 合作伙伴详情
+   *
+   * @memberof CooperatorController
+   */
   async get() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
-    const { query } = ctx.request;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const cooperation = await service.cooperator.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
-    if (!notification.read) {
-      await service.notification.update({ _id: params.id }, { read: true });
-      notification.read = true;
-    }
-
-    const embedQuery = query.embed || '';
-    const embed = {
-      user: {},
-      file: !~embedQuery.indexOf('file') ? {} : await service.file.findOne({ _id: notification.attachment }), // eslint-disable-line
-    };
-
-    if (~embedQuery.indexOf('user')) { // eslint-disable-line
-      const accountAdmin = await service.accountAdmin.findOne({ account_id: notification.sender });
-      const account = await service.account.findById(accountAdmin.account_id);
-      embed.user = Object.assign(accountAdmin.toJSON(), {
-        type: account.type,
-      });
-    }
 
     this.ctx.jsonBody = {
-      embed,
-      data: notification,
+      data: cooperation,
     };
   }
 
   get updateRule() {
     return {
-      properties: {
-        id: {
-          $ref: 'schema.definition#/oid',
+      $merge: {
+        source: {
+          $ref: 'schema.cooperator#',
         },
-        read: {
-          type: 'boolean',
-        },
-        action: {
-          type: 'string',
-          enum: [ 'read' ],
+        with: {
+          properties: {
+            id: {
+              $ref: 'schema.definition#/oid',
+            },
+          },
         },
       },
       $async: true,
-      required: [ 'id', 'action' ],
-      additionalProperties: false,
     };
   }
 
+  /**
+   * 修改合作伙伴
+   *
+   * @memberof CooperatorController
+   */
   async update() {
-    this.ctx.authPermission();
     const { ctx, updateRule } = this;
     const { query, body } = ctx.request;
     const { params, service } = ctx;
-    service.xss.xssFilter(body);
 
-    await this.ctx.verify(updateRule, Object.assign({}, query, params, body));
+    const updateParams = Object.assign({}, query, params, body);
+    await this.ctx.verify(updateRule, updateParams);
 
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const cooperator = await service.cooperator.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    if (query.action === 'read') {
-      const readNotification = {
-        read: body.read,
-      };
-      await service.notification.update({ _id: params.id }, readNotification);
-      Object.assign(notification, readNotification);
+    if (updateParams) {
+      await service.cooperator.update({ _id: params.id }, updateParams);
+      Object.assign(cooperator, updateParams);
     }
 
     this.ctx.jsonBody = {
-      data: notification,
+      data: cooperator,
     };
   }
 
+  /**
+   * 删除合作伙伴
+   *
+   * @memberof CooperatorController
+   */
   async delete() {
-    this.ctx.authPermission();
     const { ctx } = this;
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const notification = await service.notification.findById(params.id).catch(err => {
+    const cooperator = await service.cooperator.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.notification.destroy({ _id: params.id });
+    await service.cooperator.destroy({ _id: params.id });
 
     this.ctx.body = {
-      data: notification,
-    };
-  }
-
-  async withdrawNotification() {
-    this.ctx.adminPermission();
-    const { ctx } = this;
-    const { params, service } = ctx;
-
-    await ctx.verify('schema.id', params);
-
-    const baseNot = await service.notification.findOne({ _id: params.id, base_id: { $exists: false } });
-    ctx.error(baseNot, `没有找到要撤回的消息,ID:[${params.id}]`);
-
-    const condition = { base_id: params.id };
-
-    const withdrawCount = await service.notification.count(condition);
-
-    // 撤回及删除
-    await service.notification.destroy(condition);
-
-    baseNot.withdraw = true;
-
-    baseNot.save();
-
-    this.ctx.body = {
-      count: withdrawCount,
-      data: baseNot,
+      data: cooperator,
     };
   }
 }
