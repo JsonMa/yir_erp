@@ -1,7 +1,6 @@
 'use strict';
 const { Service } = require('egg');
 const VError = require('verror');
-const DataLoader = require('dataloader');
 
 class DBService extends Service {
   constructor(ctx, type) {
@@ -20,21 +19,13 @@ class DBService extends Service {
     );
     this.type = type;
   }
-
-  get loader() {
-    if (this._loader) return this._loader;
-
-    this._loader = new DataLoader(keys => this.findMany({ _id: { $in: keys } }));
-    return this._loader;
-  }
-
-  async findByIds(ids) {
-    let _ids = ids.filter(id => id); // 去掉undefined
-    _ids = Array.from(new Set(_ids.map(id => id.toString()))); // id去重
+  async findByIds(ids, populates = '') {
+    let _ids = ids.filter(id => id);
+    _ids = Array.from(new Set(_ids.map(id => id.toString())));
 
     const { EAPPLICATION } = this.app.errors;
     try {
-      return await this.loader.loadMany(_ids);
+      return await this.app.model[this.type].find({ _id: { $in: _ids } }).populate(populates);
     } catch (e) {
       throw new VError(
         {
@@ -42,15 +33,15 @@ class DBService extends Service {
           case: e,
           info: { ids: _ids },
         },
-        '查询数据不全存在'
+        '查询数据不存在'
       );
     }
   }
 
-  async findById(id) {
+  async findById(id, populates = '') {
     const { EAPPLICATION } = this.app.errors;
     try {
-      return await this.loader.load(id);
+      return await this.app.model[this.type].findById(id).populate(populates);
     } catch (e) {
       throw new VError(
         {
@@ -63,13 +54,13 @@ class DBService extends Service {
     }
   }
 
-  async findOne(conditions, fields = null, options = { paranoid: true }) {
+  async findOne(conditions, fields = null, options = { paranoid: true }, populates = '') {
     const { EMONGODB } = this.app.errors;
     if (Object.keys(options).indexOf('paranoid') === -1) options.paranoid = true;
     const query = options.paranoid
       ? Object.assign({ deleted_at: null }, conditions)
       : conditions;
-    const date = await this.app.model[this.type].findOne(query, fields).catch(error => {
+    const date = await this.app.model[this.type].findOne(query, fields).populate(populates).catch(error => {
       throw new VError(
         {
           name: EMONGODB,
@@ -83,7 +74,7 @@ class DBService extends Service {
     return date;
   }
 
-  async findMany(conditions, fields = null, options = { paranoid: true }) {
+  async findMany(conditions, fields = null, options = { paranoid: true }, populates = '') {
     const { EMONGODB } = this.app.errors;
     if (Object.keys(options).indexOf('paranoid') === -1) options.paranoid = true;
     const query = options.paranoid
@@ -91,6 +82,7 @@ class DBService extends Service {
       : conditions;
     const items = await this.app.model[this.type]
       .find(query, fields, options)
+      .populate(populates)
       .catch(error => {
         throw new VError(
           {
@@ -103,6 +95,11 @@ class DBService extends Service {
         );
       });
     return items;
+  }
+
+  async isExsited(conditions, options = { paranoid: true }) {
+    const results = await this.findMany(conditions, null, options);
+    return results.length >= 1;
   }
 
   async count(conditions, options = { paranoid: true }) {
