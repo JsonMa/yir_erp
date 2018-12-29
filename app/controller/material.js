@@ -1,7 +1,6 @@
 'use strict';
 
 const { Controller } = require('egg');
-const _ = require('underscore');
 
 class MaterialController extends Controller {
   /**
