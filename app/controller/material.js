@@ -15,7 +15,7 @@ class MaterialController extends Controller {
     await ctx.verify('schema.material', body);
 
     const isExistend = ctx.service.cooperator.isExsited({ name: body.name });
-    ctx.error(!isExistend, '该名称已存在');
+    ctx.error(isExistend, '该名称已存在');
 
     const { supplier } = body;
     if (supplier) {
