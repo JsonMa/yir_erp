@@ -36,7 +36,7 @@ module.exports = ({ mongoose }) => {
     password: String,
     role: {
       type: String,
-      enum: [ 'KUGUAN', 'CAIWU', 'CAIGOU', 'ZHIJIAN', 'NORMAL', 'ADMIN' ],
+      enum: [ 'KUGUAN', 'CAIWU', 'CHUNA', 'CAIGOU', 'ZHIJIAN', 'NORMAL', 'ADMIN' ],
       default: 'NORMAL',
     },
     nick_name: String,

@@ -13,7 +13,7 @@ module.exports = {
     },
     role: {
       type: 'string',
-      enum: [ 'KUGUAN', 'CAIWU', 'CAIGOU', 'ZHIJIAN', 'NORMAL', 'ADMIN' ],
+      enum: [ 'KUGUAN', 'CAIWU', 'CHUNA', 'CAIGOU', 'ZHIJIAN', 'NORMAL', 'ADMIN' ],
     },
     nick_name: {
       type: 'string',

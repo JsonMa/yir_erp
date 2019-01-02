@@ -17,7 +17,7 @@ class MaterialEntryController extends Controller {
     const { real_count, per_price } = body;
 
     body.no = uuid(); // 生成单号
-    body.totalPrice = real_count * per_price; // 设置总价
+    body.total_price = real_count * per_price; // 设置总价
 
     const entry = await ctx.model.MaterialEntry.create(body);
     this.ctx.jsonBody = {
@@ -37,6 +37,14 @@ class MaterialEntryController extends Controller {
             keyword: {
               type: 'string',
             },
+            start_time: {
+              type: 'string',
+              format: 'date-time',
+            },
+            end_time: {
+              type: 'string',
+              format: 'date-time',
+            },
           },
           required: [],
         },
@@ -53,30 +61,40 @@ class MaterialEntryController extends Controller {
     const { ctx } = this;
     const { service } = ctx;
     const { query } = ctx.request;
-    const { limit = 10, offset = 0, sort = '-created_at' } = query;
+    let { limit = 10, offset = 0, sort = '-created_at', start_time, end_time, purchase_method: purchaseMethod } = query;
     const { generateSortParam } = ctx.helper.pagination;
 
-    await this.ctx.verify(this.listRule, query);
+    await this.ctx.verify(this.listRule, Object.assign(query));
 
     const filter = {};
     if (query.keyword) {
       filter.$or = [
-        { name: { $regex: query.keyword } },
         { no: { $regex: query.keyword } },
-        { model: { $regex: query.keyword } },
-        { specific: { $regex: query.keyword } },
       ];
     }
-    const materials = await service.material.findMany(filter, null, {
+
+    if (start_time || end_time) {
+      if (start_time && !end_time) {
+        end_time = Date.now();
+        filter.created_at = { $gte: new Date(start_time), $lte: new Date(end_time),
+        };
+      }
+      if (!start_time && end_time) {
+        filter.created_at = { $lte: new Date(end_time),
+        };
+      }
+    }
+    if (purchaseMethod) filter.purchase_method = purchaseMethod;
+    const materialEntries = await service.materialEntry.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'supplier category');
+      sort: generateSortParam(sort) }, 'material buyer reviewer inspector');
 
     this.ctx.jsonBody = {
       meta: {
-        count: await service.material.count(filter),
+        count: await service.materialEntry.count(filter),
       },
-      data: materials,
+      data: materialEntries,
     };
   }
 
@@ -90,13 +108,13 @@ class MaterialEntryController extends Controller {
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const material = await service.material.findById(params.id, 'supplier category')
+    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector')
       .catch(err => {
         ctx.error(!err, 404);
       });
 
     this.ctx.jsonBody = {
-      data: material,
+      data: materialEntry,
     };
   }
 
@@ -104,7 +122,7 @@ class MaterialEntryController extends Controller {
     return {
       $merge: {
         source: {
-          $ref: 'schema.material#',
+          $ref: 'schema.materialEntry#',
         },
         with: {
           properties: {
@@ -130,15 +148,15 @@ class MaterialEntryController extends Controller {
     const updateParams = Object.assign({}, query, params, body);
 
     await this.ctx.verify(updateRule, updateParams);
-    const material = await service.material.findById(params.id, 'supplier category').catch(err => {
+    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector').catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.material.update({ _id: params.id }, updateParams);
-    Object.assign(material, updateParams);
+    await service.materialEntry.update({ _id: params.id }, updateParams);
+    Object.assign(materialEntry, updateParams);
 
     this.ctx.jsonBody = {
-      data: material,
+      data: materialEntry,
     };
   }
 
@@ -152,14 +170,14 @@ class MaterialEntryController extends Controller {
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const material = await service.material.findById(params.id).catch(err => {
+    const materialEntry = await service.materialEntry.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.material.destroy({ _id: params.id });
+    await service.materialEntry.destroy({ _id: params.id });
 
     this.ctx.body = {
-      data: material,
+      data: materialEntry,
     };
   }
 }
