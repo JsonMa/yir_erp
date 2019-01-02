@@ -20,6 +20,9 @@ module.exports = ({ mongoose }) => {
    * @property {Object}    image                 - 图片
    * @property {String}    remark                - 备注
    * @property {Boolean}   enable                - 是否启用
+   * @property {Number}    total_num             - 总数量
+   * @property {Number}    wasted_num            - 废品数量
+   * @property {Number}    left_num              - 剩余数量
    * @property {Date}      deleted_at            - 删除时间
    *
    */
@@ -46,6 +49,18 @@ module.exports = ({ mongoose }) => {
     enable: {
       type: Boolean,
       default: true,
+    },
+    total_num: {
+      type: Number,
+      default: 0,
+    },
+    wasted_num: {
+      type: Number,
+      default: 0,
+    },
+    left_num: {
+      type: Number,
+      default: 0,
     },
     deleted_at: Date,
   }, Object.assign({}, { timestamps }));

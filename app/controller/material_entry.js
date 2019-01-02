@@ -147,10 +147,31 @@ class MaterialEntryController extends Controller {
     const { params, service } = ctx;
     const updateParams = Object.assign({}, query, params, body);
 
+    const { status } = body;
     await this.ctx.verify(updateRule, updateParams);
+
     const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector').catch(err => {
       ctx.error(!err, 404);
     });
+
+    if (status === 'PASSED') {
+
+      // TODO 验证权限是否为“财务”及以上
+      const { real_count } = materialEntry;
+      const material = await service.material.findById(params.id, 'supplier category').catch(err => {
+        ctx.error(!err, 404);
+      });
+
+      // 修改材料库数量
+      let { total_num, left_num } = material;
+      total_num += real_count;
+      left_num += real_count;
+
+      await service.material.update({ _id: params.id }, {
+        total_num,
+        left_num,
+      });
+    }
 
     await service.materialEntry.update({ _id: params.id }, updateParams);
     Object.assign(materialEntry, updateParams);
