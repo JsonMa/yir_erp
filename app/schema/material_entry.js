@@ -46,6 +46,10 @@ module.exports = {
       type: 'string',
       enum: [ 'CASH', 'BANK', 'WECHAT', 'ALIPAY' ],
     },
+    status: {
+      type: 'string',
+      enum: [ 'UNREVIEW', 'PASSED', 'REJECTED' ],
+    },
   },
   $async: true,
   additionalProperties: false,

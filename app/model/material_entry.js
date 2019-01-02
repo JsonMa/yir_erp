@@ -62,6 +62,11 @@ module.exports = ({ mongoose }) => {
       enum: [ 'CASH', 'BANK', 'WECHAT', 'ALIPAY' ],
       default: 'CASH',
     },
+    status: {
+      type: String,
+      enum: [ 'UNREVIEW', 'PASSED', 'REJECTED' ],
+      default: 'UNREVIEW',
+    },
     deleted_at: Date,
   }, Object.assign({}, { timestamps }));
 
