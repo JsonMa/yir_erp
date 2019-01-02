@@ -105,11 +105,7 @@ class MaterialOutController extends Controller {
     const { params, service } = ctx;
 
     await ctx.verify('schema.id', params);
-    const materialOut = await service.materialOut.findById(params.id, 'materials maker applicant reviewer')
-      .catch(err => {
-        ctx.error(!err, 404);
-      });
-
+    const materialOut = await service.materialOut.findById(params.id, 'maker applicant reviewer');
     this.ctx.jsonBody = {
       data: materialOut,
     };
@@ -169,15 +165,13 @@ class MaterialOutController extends Controller {
       });
 
       // 获取所有被申请的材料信息
-      const real_materials = await Promise.all(Object.keys(appliedMaterails).map(materialId => {
-        return service.material.findById(materialId, 'supplier category');
-      }));
+      const real_materials = await service.material.findMany({ _id: { $in: Object.keys(appliedMaterails) } }, null);
 
       // 剩余数量验证
       real_materials.forEach(item => {
         // 实际剩余数量
-        const { _id, left_num, total_num } = item;
-        ctx.error(left_num >= appliedMaterails[_id], '出库失败，库存数少于申请数量');
+        const { _id, left_num, total_num, name } = item;
+        ctx.error(left_num >= appliedMaterails[_id].applicantCount, `出库失败，商品：${name}， 库存数少于申请数量`);
         appliedMaterails[_id].leftCount = left_num;
         appliedMaterails[_id].totalCount = total_num;
       });

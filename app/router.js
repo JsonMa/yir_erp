@@ -61,12 +61,12 @@ module.exports = app => {
   router.delete(`${prefix}/api/material_entries/:id`, controller.materialEntry.delete);
 
 
-  // // material_out
-  // router.get(`${prefix}/api/material_outs`, controller.material_out.index);
-  // router.post(`${prefix}/api/material_outs`, controller.material_out.create);
-  // router.get(`${prefix}/api/material_outs/:id`, controller.material_out.get);
-  // router.patch(`${prefix}/api/material_outs/:id`, controller.material_out.update);
-  // router.delete(`${prefix}/api/material_outs/:id`, controller.material_out.delete);
+  // material_out
+  router.get(`${prefix}/api/material_outs`, controller.materialOut.index);
+  router.post(`${prefix}/api/material_outs`, controller.materialOut.create);
+  router.get(`${prefix}/api/material_outs/:id`, controller.materialOut.get);
+  router.patch(`${prefix}/api/material_outs/:id`, controller.materialOut.update);
+  router.delete(`${prefix}/api/material_outs/:id`, controller.materialOut.delete);
 
   // product_entry
   // router.get(`${prefix}/api/product_entries`, controller.product_entry.index);
