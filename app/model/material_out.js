@@ -17,6 +17,7 @@ module.exports = ({ mongoose }) => {
    * @property {Object}      maker            - 制作者
    * @property {Object}      applicant        - 申请者
    * @property {Object}      reviewer         - 审核人
+   * @property {String}      status           - 审核状态
    * @property {Date}        deleted_at       - 删除时间
    *
    */
@@ -48,6 +49,15 @@ module.exports = ({ mongoose }) => {
     reviewer: {
       type: Schema.Types.ObjectId,
       ref: 'account',
+    },
+    status: {
+      type: String,
+      enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED' ],
+      default: 'UNREVIEW',
+    },
+    rejectedReason: {
+      type: String,
+      default: '',
     },
     deleted_at: Date,
   }, Object.assign({}, { timestamps }));

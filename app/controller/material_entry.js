@@ -157,8 +157,8 @@ class MaterialEntryController extends Controller {
     if (status === 'PASSED') {
 
       // TODO 验证权限是否为“财务”及以上
-      const { real_count } = materialEntry;
-      const material = await service.material.findById(params.id, 'supplier category').catch(err => {
+      const { real_count, material: materialId } = materialEntry;
+      const material = await service.material.findById(materialId, 'supplier category').catch(err => {
         ctx.error(!err, 404);
       });
 
@@ -167,7 +167,7 @@ class MaterialEntryController extends Controller {
       total_num += real_count;
       left_num += real_count;
 
-      await service.material.update({ _id: params.id }, {
+      await service.material.update({ _id: materialId }, {
         total_num,
         left_num,
       });
