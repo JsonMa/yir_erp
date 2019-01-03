@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 const uuid = require('uuid');
 
 class MaterialEntryController extends Controller {
@@ -11,10 +13,17 @@ class MaterialEntryController extends Controller {
    */
   async create() {
 
-    const { ctx } = this;
-    const { body } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = ctx.request;
     await ctx.verify('schema.materialEntry', body);
-    const { real_count, per_price } = body;
+    const {
+      real_count,
+      per_price,
+    } = body;
 
     body.no = uuid(); // 生成单号
     body.total_price = real_count * per_price; // 设置总价
@@ -58,37 +67,46 @@ class MaterialEntryController extends Controller {
    * @memberof MaterialEntryController
    */
   async index() {
-    const { ctx } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    let { limit = 10, offset = 0, sort = '-created_at', start_time, end_time, purchase_method: purchaseMethod } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    const {
+      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, purchase_method: purchaseMethod, status,
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(this.listRule, Object.assign(query));
 
     const filter = {};
+
     if (query.keyword) {
-      filter.$or = [
-        { no: { $regex: query.keyword } },
-      ];
+      filter.$or = [{
+        no: {
+          $regex: query.keyword,
+        },
+      }];
+    }
+    if (status) filter.status = status;
+    if (start_time && end_time) {
+      filter.created_at = {
+        $gte: new Date(start_time),
+        $lte: new Date(end_time),
+      };
     }
 
-    if (start_time || end_time) {
-      if (start_time && !end_time) {
-        end_time = Date.now();
-        filter.created_at = { $gte: new Date(start_time), $lte: new Date(end_time),
-        };
-      }
-      if (!start_time && end_time) {
-        filter.created_at = { $lte: new Date(end_time),
-        };
-      }
-    }
-    if (purchaseMethod) filter.purchase_method = purchaseMethod;
     const materialEntries = await service.materialEntry.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'material buyer reviewer inspector');
+      sort: generateSortParam(sort),
+    }, 'material buyer reviewer inspector maker');
 
     this.ctx.jsonBody = {
       meta: {
@@ -104,11 +122,16 @@ class MaterialEntryController extends Controller {
    * @memberof MaterialEntryController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
-    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector')
+    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector maker')
       .catch(err => {
         ctx.error(!err, 404);
       });
@@ -142,38 +165,59 @@ class MaterialEntryController extends Controller {
    * @memberof MaterialEntryController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
     const updateParams = Object.assign({}, query, params, body);
 
-    const { status } = body;
+    const {
+      status,
+    } = body;
     await this.ctx.verify(updateRule, updateParams);
 
-    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector').catch(err => {
+    const materialEntry = await service.materialEntry.findById(params.id, 'material buyer reviewer inspector maker').catch(err => {
       ctx.error(!err, 404);
     });
 
     if (status === 'PASSED') {
 
       // TODO 验证权限是否为“财务”及以上
-      const { real_count, material: materialId } = materialEntry;
+      const {
+        real_count,
+        material: materialId,
+      } = materialEntry;
       const material = await service.material.findById(materialId, 'supplier category').catch(err => {
         ctx.error(!err, 404);
       });
 
       // 修改材料库数量
-      let { total_num, left_num } = material;
+      let {
+        total_num,
+        left_num,
+      } = material;
       total_num += real_count;
       left_num += real_count;
 
-      await service.material.update({ _id: materialId }, {
+      await service.material.update({
+        _id: materialId,
+      }, {
         total_num,
         left_num,
       });
     }
 
-    await service.materialEntry.update({ _id: params.id }, updateParams);
+    await service.materialEntry.update({
+      _id: params.id,
+    }, updateParams);
     Object.assign(materialEntry, updateParams);
 
     this.ctx.jsonBody = {
@@ -187,15 +231,22 @@ class MaterialEntryController extends Controller {
    * @memberof MaterialEntryController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const materialEntry = await service.materialEntry.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.materialEntry.destroy({ _id: params.id });
+    await service.materialEntry.destroy({
+      _id: params.id,
+    });
 
     this.ctx.body = {
       data: materialEntry,

@@ -1,6 +1,8 @@
 'use strict';
 
-const { VError } = require('verror');
+const {
+  VError,
+} = require('verror');
 
 module.exports = {
   get jsonBody() {
@@ -8,14 +10,25 @@ module.exports = {
   },
 
   set jsonBody(obj) {
-    const { data, meta = {}, embed = {} } = obj;
+    const {
+      data,
+      meta = {},
+      embed = {},
+    } = obj;
     this.assert(data && typeof data === 'object', 'jsonBody 传入data应为Object');
 
-    this.body = { meta, embed, data };
+    this.set('Access-Control-Allow-Origin', 'http://localhost:8080');
+    this.body = {
+      meta,
+      embed,
+      data,
+    };
   },
 
   async verify(rule, params) {
-    const { errors } = this.app;
+    const {
+      errors,
+    } = this.app;
     const ret = await this.validate(rule, params).catch(function(e) {
       throw new VError({
         name: errors.EBADREQUEST,
@@ -31,11 +44,16 @@ module.exports = {
     this.assert(info instanceof Object, 'appError.info 应为 Object');
     if (condition) return;
     this.logger.error({
-      msg, info,
+      msg,
+      info,
     });
     throw new VError({
       name: this.app.errors.EAPPLICATION,
-      info: Object.assign({ condition }, { orginInfo: info }),
+      info: Object.assign({
+        condition,
+      }, {
+        orginInfo: info,
+      }),
     }, msg || '服务端错误');
   },
 
@@ -61,18 +79,24 @@ module.exports = {
 
   // 自定义组合权限
   customePermission(permissions) {
-    const { EAPPLICATION } = this.app.errors;
+    const {
+      EAPPLICATION,
+    } = this.app.errors;
     const _self = this;
     const permissionsRule = [ 'APP', 'PASSPORT', 'HEPASSPORT', 'ADMIN' ];
 
     this.assert(permissions instanceof Array, new VError({
       name: EAPPLICATION,
-      info: { permissions },
+      info: {
+        permissions,
+      },
     }, '[permissions] 应为数组'));
     permissions.forEach(p => {
       _self.assert(~permissionsRule.indexOf(p), new VError({ // eslint-disable-line
         name: EAPPLICATION,
-        info: { permission: p },
+        info: {
+          permission: p,
+        },
       }, `[permissions] 包含非法权限 [${p}]`));
     });
 
