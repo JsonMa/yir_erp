@@ -27,6 +27,9 @@ module.exports = {
     buyer: {
       $ref: 'schema.definition#/oid',
     },
+    maker: {
+      $ref: 'schema.definition#/oid',
+    },
     remark: {
       type: 'string',
     },
@@ -54,4 +57,3 @@ module.exports = {
   $async: true,
   additionalProperties: false,
 };
-
