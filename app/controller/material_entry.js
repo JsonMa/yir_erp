@@ -77,7 +77,7 @@ class MaterialEntryController extends Controller {
       query,
     } = ctx.request;
     const {
-      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, purchase_method: purchaseMethod, status,
+      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status, embed,
     } = query;
     const {
       generateSortParam,
@@ -85,8 +85,8 @@ class MaterialEntryController extends Controller {
 
     await this.ctx.verify(this.listRule, Object.assign(query));
 
+    // 构造查询filter
     const filter = {};
-
     if (query.keyword) {
       filter.$or = [{
         no: {
@@ -107,6 +107,31 @@ class MaterialEntryController extends Controller {
       skip: parseInt(offset),
       sort: generateSortParam(sort),
     }, 'material buyer reviewer inspector maker');
+
+    // embed注入
+    if (embed === 'material') {
+      const materialIds = materialEntries.map(item => {
+        return item.material.id;
+      });
+
+      const materials = await service.material.findMany({
+        _id: {
+          $in: materialIds,
+        },
+      },
+      null, {}, 'supplier');
+
+      // 构造map结构
+      const mapMaterials = {};
+      materials.forEach(material => {
+        mapMaterials[material.id] = material;
+      });
+
+      // material替代原有数据
+      materialEntries.forEach(entry => {
+        entry.material = mapMaterials[entry.material.id];
+      });
+    }
 
     this.ctx.jsonBody = {
       meta: {
