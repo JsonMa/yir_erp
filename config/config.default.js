@@ -30,7 +30,6 @@ module.exports = appInfo => {
   config.auth = {
     anonymityExpireTime: 3600 * 1000, // 1 小时
     tokenExpireTime: 3600 * 24 * 1000, // 1 天
-    appTokenExpireTime: 3600 * 24 * 365 * 1000, // 1 年
     time: 5, // 尝试错误次数
     lock_time: 60 * 15, // 锁定时间15分钟
     connectionExp: 3600,

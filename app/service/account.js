@@ -3,6 +3,7 @@
 const Service = require('../lib/DBService');
 const ObjectId = require('mongoose').Types.ObjectId;
 const lodash = require('lodash');
+const _ = require('underscore');
 
 class AccountService extends Service {
   constructor(ctx) {
@@ -18,7 +19,6 @@ class AccountService extends Service {
     } = app;
     const {
       tokenExpireTime,
-      appTokenExpireTime,
     } = config.auth;
     const objectId = ObjectId();
 
@@ -26,7 +26,7 @@ class AccountService extends Service {
       account_id: user._id,
       name: user.name,
       tel: user.tel,
-      type: user.type,
+      role: user.role,
       ip: ctx.ip,
     };
 
@@ -35,22 +35,22 @@ class AccountService extends Service {
       `access-token-${objectId}`,
       JSON.stringify(token),
       'EX',
-      user.type === 'APP' ? appTokenExpireTime / 1000 : tokenExpireTime / 1000
+      tokenExpireTime / 1000
     );
 
     // cookie设置
     ctx.cookies.set(config.cookies_prefix + 'access-token', objectId, {
-      maxAge: user.type === 'APP' ? appTokenExpireTime : tokenExpireTime,
+      maxAge: tokenExpireTime,
       overwrite: true,
       httpOnly: false,
     });
     ctx.cookies.set(config.cookies_prefix + 'user', JSON.stringify({
-      id: user.account_id,
+      id: user._id,
       avatar: user.avatar,
-      type: user.type,
+      role: user.role,
       nickname: user.nickname ? encodeURI(user.nickname).replace(/;/g, '') : null,
     }), {
-      maxAge: app.config.auth.tokenExpireTime,
+      maxAge: tokenExpireTime,
       overwrite: true,
       httpOnly: false,
     });
