@@ -23,7 +23,7 @@ class CategoryController extends Controller {
     const isExistend = await ctx.service.category.isExsited({
       name: body.name,
     });
-    ctx.error(isExistend, '该名称已存在');
+    ctx.error(!isExistend, '该名称已存在');
 
     const category = await this.ctx.model.Category.create(body);
     this.ctx.jsonBody = {
@@ -126,12 +126,12 @@ class CategoryController extends Controller {
 
     const embedQuery = query.embed || '';
     const embed = {
-      sub: !~embedQuery.indexOf('sub') ? {} : await service.category.findMany({
+      sub: [ 'sub', 'material' ].includes(embedQuery) ? await service.category.findMany({
         parent: category.id,
-      }), // eslint-disable-line
-      material: !~embedQuery.indexOf('material') ? {} : await service.material.findMany({
+      }) : {}, // eslint-disable-line
+      material: [ 'sub', 'material' ].includes('material') ? await service.material.findMany({
         category: category.id,
-      }), // eslint-disable-line
+      }) : {}, // eslint-disable-line
     };
 
     this.ctx.jsonBody = {

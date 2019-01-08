@@ -22,7 +22,7 @@ class CooperatorController extends Controller {
     const isExistend = await ctx.service.cooperator.isExsited({
       name: body.name,
     });
-    ctx.error(isExistend, '该名称已存在');
+    ctx.error(!isExistend, '该名称已存在');
 
     const cooperator = await this.ctx.model.Cooperator.create(body);
     this.ctx.jsonBody = {

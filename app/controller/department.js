@@ -23,7 +23,7 @@ class DepartmentController extends Controller {
     const isExistend = await ctx.service.department.isExsited({
       name: body.name,
     });
-    ctx.error(isExistend, '该名称已存在');
+    ctx.error(!isExistend, '该名称已存在');
 
     const department = await ctx.service.department.create(body);
     this.ctx.jsonBody = {

@@ -61,7 +61,6 @@ class AuthController extends Controller {
         ],
       };
 
-      console.log(filter);
       account = await service.account.findOne(filter);
       ctx.assert(account, 404);
     } catch (err) {

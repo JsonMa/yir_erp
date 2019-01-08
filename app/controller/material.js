@@ -23,7 +23,7 @@ class MaterialController extends Controller {
     const isExistend = await ctx.service.cooperator.isExsited({
       name: body.name,
     });
-    ctx.error(isExistend, '该名称已存在');
+    ctx.error(!isExistend, '该名称已存在');
 
     const {
       supplier,
