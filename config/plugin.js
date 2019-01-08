@@ -23,3 +23,8 @@ exports.cache = {
 exports.security = {
   enable: false,
 };
+
+exports.cors = {
+  enable: true,
+  package: 'egg-cors',
+};

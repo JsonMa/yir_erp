@@ -76,7 +76,7 @@ class AuthController extends Controller {
       account.toJSON()
     ));
 
-    ctx.body = {
+    ctx.jsonBody = {
       meta: {
         token,
       },
@@ -92,41 +92,10 @@ class AuthController extends Controller {
 
     await service.account.clearCookiesAndToken();
 
-    ctx.body = {
-      code: 200,
-      msg: 'success',
-    };
-  }
-
-  get accountRule() {
-    return {
-      properties: {
-        name: {
-          $ref: 'schema.definition#/str',
-        },
-      },
-      $async: true,
-      required: [ 'name' ],
-      additionalProperties: false,
-    };
-  }
-
-  async accountUnlock() {
-    const {
-      app,
-      ctx,
-    } = this;
-    const {
-      AUTHTIME,
-    } = app.redisPrefix;
-    await ctx.verify(this.accountRule, ctx.query);
-    const time = await app.redis.get(`${AUTHTIME}-${ctx.query.name}`);
-    ctx.error(time, `${ctx.query.name}账号未被锁定`);
-    await app.redis.del(`${AUTHTIME}-${ctx.query.name}`);
-
-    this.ctx.jsonBody = {
+    ctx.jsonBody = {
       data: {
-        message: `${ctx.query.name}解锁成功!`,
+        code: 200,
+        msg: 'success',
       },
     };
   }

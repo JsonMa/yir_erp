@@ -8,6 +8,7 @@
     "egg": "^2.2.1",
     "egg-ajv": "^1.0.1",
     "egg-cache": "^0.0.5",
+    "egg-cors": "^2.1.2",
     "egg-mongoose": "2.2.0",
     "egg-redis": "^2.0.0",
     "egg-scripts": "^2.5.0",

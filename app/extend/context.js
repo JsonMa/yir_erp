@@ -17,7 +17,6 @@ module.exports = {
     } = obj;
     this.assert(data && typeof data === 'object', 'jsonBody 传入data应为Object');
 
-    this.set('Access-Control-Allow-Origin', 'http://localhost:8080');
     this.body = {
       meta,
       embed,
