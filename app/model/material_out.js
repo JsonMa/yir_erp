@@ -50,6 +50,10 @@ module.exports = ({ mongoose }) => {
       type: Schema.Types.ObjectId,
       ref: 'account',
     },
+    financor: {
+      type: Schema.Types.ObjectId,
+      ref: 'account',
+    },
     status: {
       type: String,
       enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED' ],
