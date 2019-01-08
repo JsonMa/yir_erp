@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 
 class MaterialController extends Controller {
   /**
@@ -10,16 +12,26 @@ class MaterialController extends Controller {
    */
   async create() {
 
-    const { ctx } = this;
-    const { body } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = ctx.request;
     await ctx.verify('schema.material', body);
 
-    const isExistend = ctx.service.cooperator.isExsited({ name: body.name });
+    const isExistend = await ctx.service.cooperator.isExsited({
+      name: body.name,
+    });
     ctx.error(isExistend, '该名称已存在');
 
-    const { supplier } = body;
+    const {
+      supplier,
+    } = body;
     if (supplier) {
-      const { type } = await ctx.service.cooperator.findById(supplier).catch(err => {
+      const {
+        type,
+      } = await ctx.service.cooperator.findById(supplier).catch(err => {
         ctx.error(!err, 404);
       });
       ctx.error([ 'SUPPLIER', 'BOTH' ].includes(type), '不属于供应商类型');
@@ -56,27 +68,53 @@ class MaterialController extends Controller {
    * @memberof MaterialController
    */
   async index() {
-    const { ctx } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    const { limit = 10, offset = 0, sort = '-created_at' } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    const {
+      limit = 10, offset = 0, sort = '-created_at',
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(this.listRule, query);
 
     const filter = {};
     if (query.keyword) {
-      filter.$or = [
-        { name: { $regex: query.keyword } },
-        { no: { $regex: query.keyword } },
-        { model: { $regex: query.keyword } },
-        { specific: { $regex: query.keyword } },
+      filter.$or = [{
+        name: {
+          $regex: query.keyword,
+        },
+      },
+      {
+        no: {
+          $regex: query.keyword,
+        },
+      },
+      {
+        model: {
+          $regex: query.keyword,
+        },
+      },
+      {
+        specific: {
+          $regex: query.keyword,
+        },
+      },
       ];
     }
     const materials = await service.material.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'supplier category');
+      sort: generateSortParam(sort),
+    }, 'supplier category');
 
     this.ctx.jsonBody = {
       meta: {
@@ -92,8 +130,13 @@ class MaterialController extends Controller {
    * @memberof MaterialController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const material = await service.material.findById(params.id, 'supplier category')
@@ -130,9 +173,18 @@ class MaterialController extends Controller {
    * @memberof MaterialController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
     const updateParams = Object.assign({}, query, params, body);
 
     await this.ctx.verify(updateRule, updateParams);
@@ -140,7 +192,9 @@ class MaterialController extends Controller {
       ctx.error(!err, 404);
     });
 
-    await service.material.update({ _id: params.id }, updateParams);
+    await service.material.update({
+      _id: params.id,
+    }, updateParams);
     Object.assign(material, updateParams);
 
     this.ctx.jsonBody = {
@@ -154,15 +208,22 @@ class MaterialController extends Controller {
    * @memberof MaterialController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const material = await service.material.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.material.destroy({ _id: params.id });
+    await service.material.destroy({
+      _id: params.id,
+    });
 
     this.ctx.body = {
       data: material,

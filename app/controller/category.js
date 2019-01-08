@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 
 class CategoryController extends Controller {
 
@@ -10,11 +12,17 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async create() {
-    const { ctx } = this;
-    const { body } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = ctx.request;
     await ctx.verify('schema.category', body);
 
-    const isExistend = ctx.service.category.isExsited({ name: body.name });
+    const isExistend = await ctx.service.category.isExsited({
+      name: body.name,
+    });
     ctx.error(isExistend, '该名称已存在');
 
     const category = await this.ctx.model.Category.create(body);
@@ -48,25 +56,43 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async index() {
-    const { ctx } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    const { limit = 10, offset = 0, sort = '-created_at' } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    const {
+      limit = 10, offset = 0, sort = '-created_at',
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(this.listRule, query);
 
     const filter = {};
     if (query.keyword) {
-      filter.$or = [
-        { name: { $regex: query.keyword } },
-        { no: { $regex: query.keyword } },
+      filter.$or = [{
+        name: {
+          $regex: query.keyword,
+        },
+      },
+      {
+        no: {
+          $regex: query.keyword,
+        },
+      },
       ];
     }
     const categories = await service.category.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'parent image');
+      sort: generateSortParam(sort),
+    }, 'parent image');
 
     this.ctx.jsonBody = {
       meta: {
@@ -82,9 +108,16 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
-    const { query } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
 
     await ctx.verify('schema.id', params);
     const category = await service.category.findById(params.id).catch(err => {
@@ -93,8 +126,12 @@ class CategoryController extends Controller {
 
     const embedQuery = query.embed || '';
     const embed = {
-      sub: !~embedQuery.indexOf('sub') ? {} : await service.category.findMany({ parent: category.id }), // eslint-disable-line
-      material: !~embedQuery.indexOf('material') ? {} : await service.material.findMany({ category: category.id }), // eslint-disable-line
+      sub: !~embedQuery.indexOf('sub') ? {} : await service.category.findMany({
+        parent: category.id,
+      }), // eslint-disable-line
+      material: !~embedQuery.indexOf('material') ? {} : await service.material.findMany({
+        category: category.id,
+      }), // eslint-disable-line
     };
 
     this.ctx.jsonBody = {
@@ -127,9 +164,18 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
     service.xss.xssFilter(body);
 
     const updateParams = Object.assign({}, query, params, body);
@@ -140,7 +186,9 @@ class CategoryController extends Controller {
     });
 
     if (category) {
-      await service.category.update({ _id: params.id }, updateParams);
+      await service.category.update({
+        _id: params.id,
+      }, updateParams);
       Object.assign(category, updateParams);
     }
 
@@ -155,18 +203,27 @@ class CategoryController extends Controller {
    * @memberof CategoryController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const category = await service.category.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    const subCategory = await service.category.findMany({ parent: category.id });
+    const subCategory = await service.category.findMany({
+      parent: category.id,
+    });
     ctx.error(subCategory.length === 0, '删除失败，该分类下存在子类');
 
-    await service.category.destroy({ _id: params.id });
+    await service.category.destroy({
+      _id: params.id,
+    });
     this.ctx.body = {
       data: category,
     };

@@ -4,17 +4,15 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = app => {
-  const { router, controller } = app;
+  const {
+    router,
+    controller,
+  } = app;
   const prefix = app.config.prefix || '';
 
   // auth
-  // router.post(`${prefix}/api/auth/password`, controller.auth.editPassword);
-  // router.get(`${prefix}/api/auth/captcha`, controller.auth.generateCaptcha);
-  // router.post(`${prefix}/api/auth/authcode`, controller.auth.sendAuthcode);
-  // router.post(`${prefix}/api/auth/register`, controller.auth.register);
-  // router.post(`${prefix}/api/auth/login`, controller.auth.login);
-  // router.post(`${prefix}/api/auth/logout`, controller.auth.logout);
-  // router.post(`${prefix}/api/authcode/:id`, controller.auth.authcodeVerify);
+  router.post(`${prefix}/api/auth/login`, controller.auth.login);
+  router.post(`${prefix}/api/auth/logout`, controller.auth.logout);
 
   // account
   router.get(`${prefix}/api/accounts`, controller.account.index);

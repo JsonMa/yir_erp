@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 
 class CooperatorController extends Controller {
   /**
@@ -9,11 +11,17 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async create() {
-    const { ctx } = this;
-    const { body } = this.ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = this.ctx.request;
     await this.ctx.verify('schema.cooperator', body);
 
-    const isExistend = ctx.service.cooperator.isExsited({ name: body.name });
+    const isExistend = await ctx.service.cooperator.isExsited({
+      name: body.name,
+    });
     ctx.error(isExistend, '该名称已存在');
 
     const cooperator = await this.ctx.model.Cooperator.create(body);
@@ -53,16 +61,29 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async index() {
-    const { ctx, listRule } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    const { limit = 10, offset = 0, sort = '-created_at' } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+      listRule,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    const {
+      limit = 10, offset = 0, sort = '-created_at',
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(listRule, query);
     const filter = {};
     if (query.keyword) {
-      filter.name = { $regex: query.keyword };
+      filter.name = {
+        $regex: query.keyword,
+      };
     }
 
     const cooperators = await service.cooperator.findMany(filter, null, {
@@ -85,9 +106,16 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
-    const { query } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
 
     await ctx.verify('schema.id', params);
 
@@ -98,7 +126,9 @@ class CooperatorController extends Controller {
     // 该供应商下的材料
     const embedQuery = query.embed || '';
     const embed = {
-      material: [ 'material' ].includes(embedQuery) && cooperation.type === 'SUPPLIER' ? await service.material.findMany({ supplier: params.id }) : {},
+      material: [ 'material' ].includes(embedQuery) && cooperation.type === 'SUPPLIER' ? await service.material.findMany({
+        supplier: params.id,
+      }) : {},
     };
 
     this.ctx.jsonBody = {
@@ -131,9 +161,18 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
 
     const updateParams = Object.assign({}, query, params, body);
     await this.ctx.verify(updateRule, updateParams);
@@ -143,7 +182,9 @@ class CooperatorController extends Controller {
     });
 
     if (updateParams) {
-      await service.cooperator.update({ _id: params.id }, updateParams);
+      await service.cooperator.update({
+        _id: params.id,
+      }, updateParams);
       Object.assign(cooperator, updateParams);
     }
 
@@ -158,15 +199,22 @@ class CooperatorController extends Controller {
    * @memberof CooperatorController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const cooperator = await service.cooperator.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.cooperator.destroy({ _id: params.id });
+    await service.cooperator.destroy({
+      _id: params.id,
+    });
 
     this.ctx.body = {
       data: cooperator,

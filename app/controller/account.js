@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 const crypto = require('crypto');
 
 class AccountController extends Controller {
@@ -11,17 +13,24 @@ class AccountController extends Controller {
    * @memberof AccountController
    */
   async create() {
-    const { ctx } = this;
-    const { body } = ctx.request;
-    const { name, password } = body;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = ctx.request;
+    const {
+      name,
+      password,
+    } = body;
     await ctx.verify('schema.account', body);
 
-    const isExistend = ctx.service.account.isExsited({ name: body.name });
+    const isExistend = await ctx.service.account.isExsited({
+      name: body.name,
+    });
     ctx.error(isExistend, '该名称已存在');
 
-    // 加密
-    body.password = crypto.createHmac('sha256', 'yir_erp').update(password || `cqyir_${name}`).digest('hex');
-
+    body.password = crypto.createHash('sha1').update(password || `cqyir_${name}`).digest('hex');
     const account = await ctx.service.account.create(body);
     this.ctx.jsonBody = {
       data: account,
@@ -53,24 +62,37 @@ class AccountController extends Controller {
    * @memberof AccountController
    */
   async index() {
-    const { ctx } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    const { limit = 10, offset = 0, sort = '-created_at' } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    const {
+      limit = 10, offset = 0, sort = '-created_at',
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(this.listRule, query);
 
     const filter = {};
     if (query.keyword) {
-      filter.$or = [
-        { name: { $regex: query.keyword } },
-      ];
+      filter.$or = [{
+        name: {
+          $regex: query.keyword,
+        },
+      }];
     }
     const accounts = await service.account.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'parent image');
+      sort: generateSortParam(sort),
+    }, 'parent image');
 
     this.ctx.jsonBody = {
       meta: {
@@ -86,9 +108,16 @@ class AccountController extends Controller {
    * @memberof AccountController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
-    const { query } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
 
     await ctx.verify('schema.id', params);
     const account = await service.account.findById(params.id).catch(err => {
@@ -97,11 +126,24 @@ class AccountController extends Controller {
 
     const embedQuery = query.embed || '';
     const embed = {
-      materail_entry: [ 'materail_entry' ].includes(embedQuery) ? await service.materailEntry.findMany({ $or: [
-        { buyer: { $regex: query.keyword } },
-        { reviewer: { $regex: query.keyword } },
-        { inspector: { $regex: query.keyword } },
-      ] }) : {},
+      materail_entry: [ 'materail_entry' ].includes(embedQuery) ? await service.materailEntry.findMany({
+        $or: [{
+          buyer: {
+            $regex: query.keyword,
+          },
+        },
+        {
+          reviewer: {
+            $regex: query.keyword,
+          },
+        },
+        {
+          inspector: {
+            $regex: query.keyword,
+          },
+        },
+        ],
+      }) : {},
     };
 
     this.ctx.jsonBody = {
@@ -134,9 +176,18 @@ class AccountController extends Controller {
    * @memberof AccountController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
 
     const updateParams = Object.assign({}, query, params, body);
     await this.ctx.verify(updateRule, updateParams);
@@ -146,7 +197,9 @@ class AccountController extends Controller {
     });
 
     if (account) {
-      await service.department.update({ _id: params.id }, updateParams);
+      await service.department.update({
+        _id: params.id,
+      }, updateParams);
       Object.assign(account, updateParams);
     }
 
@@ -161,15 +214,22 @@ class AccountController extends Controller {
    * @memberof AccountController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const account = await service.account.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.account.destroy({ _id: params.id });
+    await service.account.destroy({
+      _id: params.id,
+    });
     this.ctx.body = {
       data: account,
     };
