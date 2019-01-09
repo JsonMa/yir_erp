@@ -3,7 +3,6 @@
 const {
   Controller,
 } = require('egg');
-const VError = require('verror');
 const crypto = require('crypto');
 
 
@@ -42,39 +41,27 @@ class AuthController extends Controller {
     const {
       service,
     } = this.ctx;
-    const {
-      EAPPLICATION,
-    } = this.app.errors;
     await ctx.verify(this.loginRule, body);
 
     let account = null;
+    const filter = {
+      password: crypto.createHash('sha1').update(body.password).digest('hex'),
+      $or: [{
+        nick_name: body.username,
+      },
+      {
+        tel: body.username,
+      },
+      ],
+    };
 
-    try {
-      const filter = {
-        password: crypto.createHash('sha1').update(body.password).digest('hex'),
-        $or: [{
-          nick_name: body.username,
-        },
-        {
-          tel: body.username,
-        },
-        ],
-      };
+    account = await service.account.findOne(filter);
+    ctx.assert(account, 400);
 
-      account = await service.account.findOne(filter);
-      ctx.assert(account, 404);
-    } catch (err) {
-      throw new VError({
-        name: EAPPLICATION,
-        info: {
-          body,
-        },
-      }, err.message || '账号或密码错误');
-    }
-
-    const token = await service.account.cookieSet(Object.assign({},
-      account.toJSON()
-    ));
+    account = Object.assign(Object.assign({
+      roleName: ctx.roleConvert(account.role),
+    }, account.toJSON()));
+    const token = await service.account.cookieSet(account);
 
     ctx.jsonBody = {
       meta: {

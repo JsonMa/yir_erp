@@ -114,4 +114,35 @@ module.exports = {
     if (this.auth.role === 'ADMIN') return null;
     this.assert.equal(this.auth.account_id, userId.toString(), 403);
   },
+
+  roleConvert(role) {
+    let convertedRole = '';
+    switch (role) {
+      case 'KUGUAN':
+        convertedRole = '库管';
+        break;
+      case 'CAIWU':
+        convertedRole = '财务';
+        break;
+      case 'CHUNA':
+        convertedRole = '出纳';
+        break;
+      case 'CAIGOU':
+        convertedRole = '采购';
+        break;
+      case 'ZHIJIAN':
+        convertedRole = '质检';
+        break;
+      case 'NORMAL':
+        convertedRole = '普通用户';
+        break;
+      case 'ADMIN':
+        convertedRole = '管理员';
+        break;
+      default:
+        convertedRole = '普通用户';
+        break;
+    }
+    return convertedRole;
+  },
 };
