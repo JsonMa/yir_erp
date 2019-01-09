@@ -18,6 +18,7 @@ class MaterialController extends Controller {
     const {
       body,
     } = ctx.request;
+    ctx.customPermission()
     await ctx.verify('schema.material', body);
 
     const isExistend = await ctx.service.cooperator.isExsited({
@@ -83,7 +84,7 @@ class MaterialController extends Controller {
     const {
       generateSortParam,
     } = ctx.helper.pagination;
-
+    ctx.customPermission()
     await this.ctx.verify(this.listRule, query);
 
     const filter = {};
@@ -137,8 +138,9 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
-
+    ctx.customPermission()
     await ctx.verify('schema.id', params);
+
     const material = await service.material.findById(params.id, 'supplier category')
       .catch(err => {
         ctx.error(!err, 404);
@@ -185,9 +187,10 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
+    ctx.customPermission()
     const updateParams = Object.assign({}, query, params, body);
-
     await this.ctx.verify(updateRule, updateParams);
+
     const material = await service.material.findById(params.id, 'supplier category').catch(err => {
       ctx.error(!err, 404);
     });
@@ -215,8 +218,9 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
-
+    ctx.adminPermission()
     await ctx.verify('schema.id', params);
+
     const material = await service.material.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });

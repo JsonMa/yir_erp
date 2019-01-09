@@ -12,17 +12,22 @@ module.exports = () => async (ctx, next) => {
   }
   ctx.auth = { sid: session };
 
+  // 过滤出未携带token的请求
   if (!accessToken) {
     await next();
     return;
   }
 
   try {
+    // redis中获取用户信息
     const redisContent = await ctx.app.redis.get(`access-token-${accessToken}`);
-    ctx.assert(redisContent, 'token已过期，请重新登陆');
+    ctx.assert(redisContent, 403, 'token已过期，请重新登陆');
     const content = JSON.parse(redisContent);
     Object.assign(ctx.auth, content);
+
+    await next();
   } catch (e) {
+    // 清楚缓存
     ctx.cookies.set(config.cookies_prefix + 'access-token', null);
     ctx.cookies.set(config.cookies_prefix + 'user', null);
 
@@ -30,6 +35,4 @@ module.exports = () => async (ctx, next) => {
     ctx.body = e.message || 'access-token已过期或解析错误,请重新登录';
     return null;
   }
-
-  await next();
 };
