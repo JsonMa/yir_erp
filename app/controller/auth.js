@@ -54,8 +54,8 @@ class AuthController extends Controller {
       },
       ],
     };
-
-    account = await service.account.findOne(filter);
+    const fields = 'name role nick_name avator tel department'
+    account = await service.account.findOne(filter, fields);
     ctx.assert(account, 400);
 
     account = Object.assign(Object.assign({
