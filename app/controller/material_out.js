@@ -1,6 +1,8 @@
 'use strict';
 
-const { Controller } = require('egg');
+const {
+  Controller,
+} = require('egg');
 const uuid = require('uuid');
 
 class MaterialOutController extends Controller {
@@ -11,8 +13,12 @@ class MaterialOutController extends Controller {
    */
   async create() {
 
-    const { ctx } = this;
-    const { body } = ctx.request;
+    const {
+      ctx,
+    } = this;
+    const {
+      body,
+    } = ctx.request;
     await ctx.verify('schema.materialOut', body);
 
     body.no = uuid(); // 生成单号
@@ -55,29 +61,44 @@ class MaterialOutController extends Controller {
    * @memberof MaterialOutController
    */
   async index() {
-    const { ctx } = this;
-    const { service } = ctx;
-    const { query } = ctx.request;
-    let { limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status } = query;
-    const { generateSortParam } = ctx.helper.pagination;
+    const {
+      ctx,
+    } = this;
+    const {
+      service,
+    } = ctx;
+    const {
+      query,
+    } = ctx.request;
+    let {
+      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status,
+    } = query;
+    const {
+      generateSortParam,
+    } = ctx.helper.pagination;
 
     await this.ctx.verify(this.listRule, Object.assign(query));
 
     const filter = {};
     if (query.keyword) {
-      filter.$or = [
-        { no: { $regex: query.keyword } },
-      ];
+      filter.$or = [{
+        no: {
+          $regex: query.keyword,
+        },
+      }];
     }
 
     if (start_time || end_time) {
       if (start_time && !end_time) {
         end_time = Date.now();
-        filter.created_at = { $gte: new Date(start_time), $lte: new Date(end_time),
+        filter.created_at = {
+          $gte: new Date(start_time),
+          $lte: new Date(end_time),
         };
       }
       if (!start_time && end_time) {
-        filter.created_at = { $lte: new Date(end_time),
+        filter.created_at = {
+          $lte: new Date(end_time),
         };
       }
     }
@@ -85,7 +106,8 @@ class MaterialOutController extends Controller {
     const materialOuts = await service.materialOut.findMany(filter, null, {
       limit: parseInt(limit),
       skip: parseInt(offset),
-      sort: generateSortParam(sort) }, 'materials maker applicant reviewer');
+      sort: generateSortParam(sort),
+    }, 'maker applicant reviewer');
 
     this.ctx.jsonBody = {
       meta: {
@@ -101,8 +123,13 @@ class MaterialOutController extends Controller {
    * @memberof MaterialOutController
    */
   async get() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const materialOut = await service.materialOut.findById(params.id, 'maker applicant reviewer');
@@ -135,12 +162,23 @@ class MaterialOutController extends Controller {
    * @memberof MaterialOutController
    */
   async update() {
-    const { ctx, updateRule } = this;
-    const { query, body } = ctx.request;
-    const { params, service } = ctx;
+    const {
+      ctx,
+      updateRule,
+    } = this;
+    const {
+      query,
+      body,
+    } = ctx.request;
+    const {
+      params,
+      service,
+    } = ctx;
     const updateParams = Object.assign({}, query, params, body);
 
-    const { status } = body;
+    const {
+      status,
+    } = body;
     await this.ctx.verify(updateRule, updateParams);
 
     const materialOut = await service.materialOut.findById(params.id, 'material buyer reviewer inspector').catch(err => {
@@ -150,12 +188,17 @@ class MaterialOutController extends Controller {
     if (status === 'PASSED') {
 
       // TODO 验证权限是否为“财务”及以上
-      const { materials } = materialOut;
+      const {
+        materials,
+      } = materialOut;
 
       // materials去重,得到实际申请的材料
       const appliedMaterails = {};
       materials.forEach(item => {
-        const { material, count } = item;
+        const {
+          material,
+          count,
+        } = item;
         if (appliedMaterails[material]) appliedMaterails[material].applicantCount += count;
         else {
           appliedMaterails[material] = {
@@ -165,12 +208,21 @@ class MaterialOutController extends Controller {
       });
 
       // 获取所有被申请的材料信息
-      const real_materials = await service.material.findMany({ _id: { $in: Object.keys(appliedMaterails) } }, null);
+      const real_materials = await service.material.findMany({
+        _id: {
+          $in: Object.keys(appliedMaterails),
+        },
+      }, null);
 
       // 剩余数量验证
       real_materials.forEach(item => {
         // 实际剩余数量
-        const { _id, left_num, total_num, name } = item;
+        const {
+          _id,
+          left_num,
+          total_num,
+          name,
+        } = item;
         ctx.error(left_num >= appliedMaterails[_id].applicantCount, `出库失败，商品：${name}， 库存数少于申请数量`);
         appliedMaterails[_id].leftCount = left_num;
         appliedMaterails[_id].totalCount = total_num;
@@ -179,17 +231,25 @@ class MaterialOutController extends Controller {
       // 修改库存数量
       await Promise.all(
         Object.keys(appliedMaterails).map(materialId => {
-          const { applicantCount, leftCount, totalCount } = appliedMaterails[materialId];
+          const {
+            applicantCount,
+            leftCount,
+            totalCount,
+          } = appliedMaterails[materialId];
           const total_num = totalCount - applicantCount;
           const left_num = leftCount - applicantCount;
-          return service.material.update({ _id: materialId }, {
+          return service.material.update({
+            _id: materialId,
+          }, {
             total_num,
             left_num,
           });
         }));
     }
 
-    await service.materialOut.update({ _id: params.id }, updateParams);
+    await service.materialOut.update({
+      _id: params.id,
+    }, updateParams);
     Object.assign(materialOut, updateParams);
 
     this.ctx.jsonBody = {
@@ -203,15 +263,22 @@ class MaterialOutController extends Controller {
    * @memberof MaterialOutController
    */
   async delete() {
-    const { ctx } = this;
-    const { params, service } = ctx;
+    const {
+      ctx,
+    } = this;
+    const {
+      params,
+      service,
+    } = ctx;
 
     await ctx.verify('schema.id', params);
     const materialOut = await service.materialOut.findById(params.id).catch(err => {
       ctx.error(!err, 404);
     });
 
-    await service.materialOut.destroy({ _id: params.id });
+    await service.materialOut.destroy({
+      _id: params.id,
+    });
 
     this.ctx.body = {
       data: materialOut,
