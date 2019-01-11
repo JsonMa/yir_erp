@@ -68,7 +68,7 @@ module.exports = {
   },
 
   kufangPermission() {
-    this.assert.equal(this.auth.role,  'KUGUAN', 403);
+    this.assert.equal(this.auth.role, 'KUGUAN', 403);
   },
 
   zhijianPermission() {
@@ -77,7 +77,7 @@ module.exports = {
 
   // 自定义组合权限
   customPermission() {
-    const permissionsRule = [ 'CAIWU', 'ZHIJIAN', 'KUGUAN', 'ADMIN' ];
+    const permissionsRule = [ 'CAIWU', 'ZHIJIAN', 'KUGUAN', 'ADMIN', 'CAIGOU' ];
     this.assert(permissionsRule.includes(this.auth.role), 403);
   },
 

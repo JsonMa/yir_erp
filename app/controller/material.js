@@ -18,7 +18,7 @@ class MaterialController extends Controller {
     const {
       body,
     } = ctx.request;
-    ctx.customPermission()
+    ctx.customPermission();
     await ctx.verify('schema.material', body);
 
     const isExistend = await ctx.service.cooperator.isExsited({
@@ -56,6 +56,9 @@ class MaterialController extends Controller {
             keyword: {
               type: 'string',
             },
+            categoryId: {
+              type: 'string',
+            },
           },
           required: [],
         },
@@ -79,16 +82,17 @@ class MaterialController extends Controller {
       query,
     } = ctx.request;
     const {
-      limit = 10, offset = 0, sort = '-created_at',
+      limit = 10, offset = 0, sort = '-created_at', categoryId, keyword,
     } = query;
     const {
       generateSortParam,
     } = ctx.helper.pagination;
-    ctx.customPermission()
+    ctx.customPermission();
     await this.ctx.verify(this.listRule, query);
 
     const filter = {};
-    if (query.keyword) {
+    if (categoryId) filter.category = categoryId;
+    if (keyword) {
       filter.$or = [{
         name: {
           $regex: query.keyword,
@@ -138,7 +142,7 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
-    ctx.customPermission()
+    ctx.customPermission();
     await ctx.verify('schema.id', params);
 
     const material = await service.material.findById(params.id, 'supplier category')
@@ -187,7 +191,7 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
-    ctx.customPermission()
+    ctx.customPermission();
     const updateParams = Object.assign({}, query, params, body);
     await this.ctx.verify(updateRule, updateParams);
 
@@ -218,7 +222,7 @@ class MaterialController extends Controller {
       params,
       service,
     } = ctx;
-    ctx.adminPermission()
+    ctx.customPermission();
     await ctx.verify('schema.id', params);
 
     const material = await service.material.findById(params.id).catch(err => {

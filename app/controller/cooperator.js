@@ -48,6 +48,9 @@ class CooperatorController extends Controller {
             keyword: {
               type: 'string',
             },
+            type: {
+              type: 'string',
+            },
           },
           required: [],
         },
@@ -72,7 +75,7 @@ class CooperatorController extends Controller {
       query,
     } = ctx.request;
     const {
-      limit = 10, offset = 0, sort = '-created_at',
+      limit = 10, offset = 0, sort = '-created_at', type, keyword,
     } = query;
     const {
       generateSortParam,
@@ -80,7 +83,8 @@ class CooperatorController extends Controller {
 
     await this.ctx.verify(listRule, query);
     const filter = {};
-    if (query.keyword) {
+    if (type) filter.type = type;
+    if (keyword) {
       filter.name = {
         $regex: query.keyword,
       };

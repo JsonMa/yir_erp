@@ -21,9 +21,6 @@ module.exports = {
     total_price: {
       type: 'number',
     },
-    unit: {
-      type: 'string',
-    },
     buyer: {
       $ref: 'schema.definition#/oid',
     },

@@ -1,9 +1,15 @@
 'use strict';
 
-const { timestamps } = require('../lib/model_common');
+const {
+  timestamps,
+} = require('../lib/model_common');
 
-module.exports = ({ mongoose }) => {
-  const { Schema } = mongoose;
+module.exports = ({
+  mongoose,
+}) => {
+  const {
+    Schema,
+  } = mongoose;
 
   /**
    * 原材料 Model
@@ -24,6 +30,7 @@ module.exports = ({ mongoose }) => {
    * @property {Number}    wasted_num            - 废品数量
    * @property {Number}    left_num              - 剩余数量
    * @property {Date}      deleted_at            - 删除时间
+   * @property {String}    unit                  - 材料
    *
    */
 
@@ -62,8 +69,13 @@ module.exports = ({ mongoose }) => {
       type: Number,
       default: 0,
     },
+    unit: {
+      type: String,
+    },
     deleted_at: Date,
-  }, Object.assign({}, { timestamps }));
+  }, Object.assign({}, {
+    timestamps,
+  }));
 
   return mongoose.model('material', schema);
 };

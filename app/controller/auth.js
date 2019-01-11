@@ -54,7 +54,7 @@ class AuthController extends Controller {
       },
       ],
     };
-    const fields = 'name role nick_name avator tel department'
+    const fields = 'name role nick_name avator tel department';
     account = await service.account.findOne(filter, fields);
     ctx.assert(account, 400);
 

@@ -32,6 +32,9 @@ module.exports = {
     enable: {
       type: 'boolean',
     },
+    unit: {
+      type: 'string',
+    },
   },
   $async: true,
   additionalProperties: false,

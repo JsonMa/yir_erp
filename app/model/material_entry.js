@@ -22,7 +22,6 @@ module.exports = ({
    * @property {String}        real_count         - 实际数量
    * @property {String}        per_price          - 单价
    * @property {String}        total_price        - 总价
-   * @property {String}        unit               - 单位
    * @property {Object}        maker              - 制单员
    * @property {Object}        buyer              - 采购员
    * @property {Object}        sender             - 送货员
@@ -47,7 +46,6 @@ module.exports = ({
     real_count: Number,
     per_price: Number,
     total_price: Number,
-    unit: String,
     buyer: {
       type: Schema.Types.ObjectId,
       ref: 'account',
