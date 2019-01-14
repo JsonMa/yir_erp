@@ -59,6 +59,10 @@ class MaterialController extends Controller {
             categoryId: {
               type: 'string',
             },
+            queryAll: {
+              type: 'string',
+              enum: [ 'true', 'false' ],
+            },
           },
           required: [],
         },
@@ -82,7 +86,7 @@ class MaterialController extends Controller {
       query,
     } = ctx.request;
     const {
-      limit = 10, offset = 0, sort = '-created_at', categoryId, keyword,
+      limit = 10, offset = 0, sort = '-created_at', categoryId, keyword, queryAll,
     } = query;
     const {
       generateSortParam,
@@ -121,10 +125,14 @@ class MaterialController extends Controller {
       sort: generateSortParam(sort),
     }, 'supplier category');
 
+    const meta = {
+      count: await service.material.count(filter),
+    };
+    if (queryAll === 'true') {
+      meta.allCount = await service.material.count();
+    }
     this.ctx.jsonBody = {
-      meta: {
-        count: await service.material.count(filter),
-      },
+      meta,
       data: materials,
     };
   }

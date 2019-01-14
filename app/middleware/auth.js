@@ -35,7 +35,10 @@ module.exports = () => async (ctx, next) => {
     ctx.cookies.set(config.cookies_prefix + 'user', null);
 
     ctx.status = 403;
-    ctx.body = e.message || 'access-token已过期或解析错误,请重新登录';
+    ctx.body = {
+      code: 4030001,
+      message: e.message || 'access-token已过期或解析错误,请重新登录',
+    };
     return null;
   }
 

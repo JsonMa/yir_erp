@@ -54,6 +54,10 @@ class MaterialEntryController extends Controller {
               type: 'string',
               format: 'date-time',
             },
+            queryAll: {
+              type: 'string',
+              enum: [ 'true', 'false' ],
+            },
           },
           required: [],
         },
@@ -77,7 +81,7 @@ class MaterialEntryController extends Controller {
       query,
     } = ctx.request;
     const {
-      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status, embed,
+      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status, embed, queryAll,
     } = query;
     const {
       generateSortParam,
@@ -133,10 +137,15 @@ class MaterialEntryController extends Controller {
       });
     }
 
+    const meta = {
+      count: await service.materialEntry.count(filter),
+    };
+    if (queryAll === 'true') {
+      meta.allCount = await service.materialEntry.count();
+    }
+
     this.ctx.jsonBody = {
-      meta: {
-        count: await service.materialEntry.count(filter),
-      },
+      meta,
       data: materialEntries,
     };
   }

@@ -4,6 +4,9 @@ const {
   Controller,
 } = require('egg');
 const uuid = require('uuid');
+const ObjectId = require('mongoose').Types.ObjectId;
+const _ = require('lodash');
+
 
 class MaterialOutController extends Controller {
   /**
@@ -48,6 +51,10 @@ class MaterialOutController extends Controller {
               type: 'string',
               format: 'date-time',
             },
+            queryAll: {
+              type: 'string',
+              enum: [ 'true', 'false' ],
+            },
           },
           required: [],
         },
@@ -71,7 +78,7 @@ class MaterialOutController extends Controller {
       query,
     } = ctx.request;
     let {
-      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status,
+      limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status, queryAll, embed,
     } = query;
     const {
       generateSortParam,
@@ -109,10 +116,66 @@ class MaterialOutController extends Controller {
       sort: generateSortParam(sort),
     }, 'maker applicant reviewer');
 
-    this.ctx.jsonBody = {
-      meta: {
-        count: await service.materialOut.count(filter),
+    // embed注入
+    const materialIds = [];
+    const departmentIds = [];
+    if (embed.includes('material')) {
+      materialOuts.forEach(item => {
+        departmentIds.push(item.applicant.department);
+        item.materials.forEach(material => {
+          materialIds.push(material.material);
+        });
+      });
+      const materials = await service.material.findMany({
+        _id: {
+          $in: materialIds,
+        },
       },
+      null, {
+        paranoid: false,
+      }, 'supplier');
+
+      // 构造map结构
+      const mapMaterials = {};
+      materials.forEach(material => {
+        mapMaterials[material.id] = material;
+      });
+
+      // material替代原有数据
+      materialOuts.forEach(out => {
+        out.materials.forEach(item => {
+          item.material = mapMaterials[item.material];
+        });
+      });
+    }
+
+    if (embed.includes('department')) {
+      const departments = await service.department.findMany({
+        _id: {
+          $in: departmentIds,
+        },
+      },
+      null, {
+        paranoid: false,
+      });
+
+      const mapDepartments = {};
+      departments.forEach(department => {
+        mapDepartments[department.id] = department;
+      });
+      materialOuts.forEach(out => {
+        out.applicant.department = mapDepartments[out.applicant.department];
+      });
+    }
+    const meta = {
+      count: await service.materialOut.count(filter),
+    };
+    if (queryAll === 'true') {
+      meta.allCount = await service.materialOut.count();
+    }
+
+    this.ctx.jsonBody = {
+      meta,
       data: materialOuts,
     };
   }
