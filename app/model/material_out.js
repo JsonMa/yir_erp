@@ -37,7 +37,7 @@ module.exports = ({
           type: Schema.Types.ObjectId,
           ref: 'material',
         },
-        count: Number,
+        count: String,
         remark: String,
         order: String,
       },

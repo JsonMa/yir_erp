@@ -92,7 +92,7 @@ class AccountController extends Controller {
       limit: parseInt(limit),
       skip: parseInt(offset),
       sort: generateSortParam(sort),
-    }, 'parent image');
+    }, 'parent image department');
 
     this.ctx.jsonBody = {
       meta: {

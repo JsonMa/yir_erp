@@ -77,7 +77,7 @@ class MaterialOutController extends Controller {
     const {
       query,
     } = ctx.request;
-    let {
+    const {
       limit = 10, offset = 0, sort = '-created_at', start_time, end_time, status, queryAll, embed,
     } = query;
     const {
@@ -95,19 +95,11 @@ class MaterialOutController extends Controller {
       }];
     }
 
-    if (start_time || end_time) {
-      if (start_time && !end_time) {
-        end_time = Date.now();
-        filter.created_at = {
-          $gte: new Date(start_time),
-          $lte: new Date(end_time),
-        };
-      }
-      if (!start_time && end_time) {
-        filter.created_at = {
-          $lte: new Date(end_time),
-        };
-      }
+    if (start_time && end_time) {
+      filter.created_at = {
+        $gte: new Date(start_time),
+        $lte: new Date(end_time),
+      };
     }
     if (status) filter.status = status;
     const materialOuts = await service.materialOut.findMany(filter, null, {
@@ -121,7 +113,7 @@ class MaterialOutController extends Controller {
     const departmentIds = [];
     if (embed.includes('material')) {
       materialOuts.forEach(item => {
-        departmentIds.push(item.applicant.department);
+        if (item.applicant) departmentIds.push(item.applicant.department);
         item.materials.forEach(material => {
           materialIds.push(material.material);
         });
@@ -158,14 +150,17 @@ class MaterialOutController extends Controller {
       null, {
         paranoid: false,
       });
-
-      const mapDepartments = {};
-      departments.forEach(department => {
-        mapDepartments[department.id] = department;
-      });
-      materialOuts.forEach(out => {
-        out.applicant.department = mapDepartments[out.applicant.department];
-      });
+      if (departments) {
+        const mapDepartments = {};
+        departments.forEach(department => {
+          mapDepartments[department.id] = department;
+        });
+        materialOuts.forEach(out => {
+          if (out.applicant) {
+            out.applicant.department = mapDepartments[out.applicant.department];
+          }
+        });
+      }
     }
     const meta = {
       count: await service.materialOut.count(filter),

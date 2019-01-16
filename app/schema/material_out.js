@@ -14,7 +14,7 @@ module.exports = {
             $ref: 'schema.definition#/oid',
           },
           count: {
-            type: 'number',
+            type: 'string',
           },
           remark: {
             type: 'string',
