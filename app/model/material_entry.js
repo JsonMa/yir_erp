@@ -28,7 +28,7 @@ module.exports = ({
    * @property {Object}        inspector          - 质检员
    * @property {Object}        reviewer           - 审核人
    * @property {String}        status             - 审核状态
-   * @property {String}        rejectedReason     - 拒绝原因
+   * @property {String}        rejected_reason    - 拒绝原因
    * @property {Boolean}       quality_result     - 质检结果
    * @property {String}        purchase_method    - 付款方式
    * @property {String}        remark             - 入库单备注
@@ -65,8 +65,8 @@ module.exports = ({
       ref: 'account',
     },
     quality_result: {
-      type: Boolean,
-      default: false,
+      type: String,
+      enum: [ 'PASSED', 'REJECTED', 'PART' ],
     },
     purchase_method: {
       type: String,

@@ -40,7 +40,8 @@ module.exports = {
       $ref: 'schema.definition#/oid',
     },
     quality_result: {
-      type: 'boolean',
+      type: 'string',
+      enum: [ 'PASSED', 'REJECTED', 'PART' ],
     },
     purchase_method: {
       type: 'string',
@@ -48,7 +49,7 @@ module.exports = {
     },
     status: {
       type: 'string',
-      enum: [ 'UNREVIEW', 'PASSED', 'REJECTED' ],
+      enum: [ 'UNREVIEW', 'PASSED', 'REJECTED', 'REACTIVATED' ],
     },
   },
   $async: true,
