@@ -23,10 +23,11 @@ class MaterialEntryController extends Controller {
     const {
       real_count,
       per_price,
+      application_count,
     } = body;
 
     body.no = uuid(); // 生成单号
-    body.total_price = real_count * per_price; // 设置总价
+    body.total_price = parseInt(real_count || application_count) * parseInt(per_price); // 设置总价
 
     const entry = await ctx.model.MaterialEntry.create(body);
     this.ctx.jsonBody = {

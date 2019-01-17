@@ -10,16 +10,16 @@ module.exports = {
       $ref: 'schema.definition#/oid',
     },
     application_count: {
-      type: 'number',
+      type: 'string',
     },
     real_count: {
-      type: 'number',
+      type: 'string',
     },
     per_price: {
-      type: 'number',
+      type: 'string',
     },
     total_price: {
-      type: 'number',
+      type: 'string',
     },
     buyer: {
       $ref: 'schema.definition#/oid',
