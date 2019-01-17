@@ -44,6 +44,9 @@ module.exports = {
       type: 'string',
       enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED' ],
     },
+    rejected_reason: {
+      type: 'string',
+    },
   },
   $async: true,
   additionalProperties: false,

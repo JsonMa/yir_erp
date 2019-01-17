@@ -65,9 +65,8 @@ module.exports = ({
       enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED' ],
       default: 'UNREVIEW',
     },
-    rejectedReason: {
+    rejected_reason: {
       type: String,
-      default: '',
     },
     deleted_at: Date,
   }, Object.assign({}, {
