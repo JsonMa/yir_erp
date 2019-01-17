@@ -4,8 +4,6 @@ const {
   Controller,
 } = require('egg');
 const uuid = require('uuid');
-const ObjectId = require('mongoose').Types.ObjectId;
-const _ = require('lodash');
 
 
 class MaterialOutController extends Controller {
@@ -303,6 +301,12 @@ class MaterialOutController extends Controller {
             left_num,
           });
         }));
+
+      // 修改材料剩余库存
+      updateParams.materials = materialOut.materials;
+      materialOut.materials.forEach(item => {
+        item.left_count = appliedMaterails[item.material].leftCount;
+      });
     }
 
     await service.materialOut.update({
