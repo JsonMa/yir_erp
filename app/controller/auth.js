@@ -56,7 +56,7 @@ class AuthController extends Controller {
     };
     const fields = 'name role nick_name avator tel department';
     account = await service.account.findOne(filter, fields);
-    ctx.assert(account, 400);
+    ctx.assert(account, 400, '用户名或密码错误');
 
     account = Object.assign(Object.assign({
       roleName: ctx.roleConvert(account.role),

@@ -28,7 +28,7 @@ class AccountController extends Controller {
     const isExistend = await ctx.service.account.isExsited({
       name: body.name,
     });
-    ctx.error(!isExistend, '该名称已存在');
+    ctx.error(!isExistend, '该用户已存在');
 
     body.password = crypto.createHash('sha1').update(password || `cqyir_${name}`).digest('hex');
     const account = await ctx.service.account.create(body);

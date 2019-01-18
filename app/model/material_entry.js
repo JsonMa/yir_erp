@@ -75,8 +75,8 @@ module.exports = ({
     },
     status: {
       type: String,
-      enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED' ],
-      default: 'UNREVIEW',
+      enum: [ 'UNREVIEW', 'REACTIVATED', 'PASSED', 'REJECTED', 'INSPECTION', 'STORAGE' ],
+      default: 'INSPECTION',
     },
     rejected_reason: {
       type: String,
