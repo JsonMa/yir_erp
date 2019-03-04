@@ -21,16 +21,20 @@ class AccountController extends Controller {
     } = ctx.request;
     const {
       name,
-      password,
+      tel,
     } = body;
     await ctx.verify('schema.account', body);
 
-    const isExistend = await ctx.service.account.isExsited({
-      name: body.name,
+    const isNameExistend = await ctx.service.account.isExsited({
+      name,
     });
-    ctx.error(!isExistend, '该用户已存在');
+    const isPhoneExistend = await ctx.service.account.isExsited({
+      tel,
+    });
 
-    body.password = crypto.createHash('sha1').update(password || `cqyir_${name}`).digest('hex');
+    ctx.error(!isNameExistend || !isPhoneExistend, '该用户名或手机号已存在');
+
+    body.password = crypto.createHash('sha1').update(`cqyir_${tel}`).digest('hex');
     const account = await ctx.service.account.create(body);
     this.ctx.jsonBody = {
       data: account,
