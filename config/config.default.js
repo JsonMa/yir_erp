@@ -62,5 +62,9 @@ module.exports = appInfo => {
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
   };
 
+  config.static = {
+    prefix: '/',
+  };
+
   return config;
 };
