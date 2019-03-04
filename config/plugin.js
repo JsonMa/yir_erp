@@ -28,3 +28,5 @@ exports.cors = {
   enable: true,
   package: 'egg-cors',
 };
+
+exports.static = true;
