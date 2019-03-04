@@ -89,7 +89,7 @@ module.exports = app => {
 
   // website
   router.get('/', async ctx => {
-    const fpath = path.join(__dirname, './public/website/index.html');
+    const fpath = path.join(__dirname, './public/index.html');
     ctx.set('Content-Type', 'text/html');
     ctx.body = fs.createReadStream(fpath);
   });
