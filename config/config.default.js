@@ -9,10 +9,10 @@ module.exports = appInfo => {
 
   config.mongoose = {
     client: {
-      url: 'mongodb://localhost:27017/cqbgm',
+      url: 'mongodb://localhost:27017/cqerp',
       options: {
-        user: 'cqbgm',
-        pass: 'cqbgm123456',
+        user: 'cqerp',
+        pass: 'cqerp123456',
       },
     },
   };
